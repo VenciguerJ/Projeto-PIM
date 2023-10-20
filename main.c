@@ -32,6 +32,28 @@ user pesquisaUser(char *arquivo, int cpf){
 	return tmp;
 }
 
+char* verifica_arquivo(int cpf){
+	
+	FILE *arqCorreto;
+	user pesq;
+	
+	pesq = pesqisaUser(fclientes, cpf);
+	if(pesq.cpf == -1){
+		pesq = pesqisaUser(fclientes, cpf);
+		if(pesq.cpf == -1){
+			printf("Usuario nao encontrado");
+		}
+		else{
+			return fcorretores;
+		}
+	
+	}
+	else{
+		return fclientes;
+	}
+	
+}
+
 void login_cadastro_criaInfos(char *arquivo){
 	int iguais;
 	char tmppass[11];
@@ -65,7 +87,7 @@ void login_cadastro_criaInfos(char *arquivo){
 		FILE *arq = fopen(arquivo, "a+"); //abre o arquivo para escrita
 
 		
-		if(arq!= NULL){
+		if(arq != NULL){
 			fprintf(arq, "%s %i %i %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
 		}
         fclose(arq);
@@ -93,7 +115,7 @@ void login_cadastro(){
 }
 
 void login(){
-	char tempsenha[11];
+	char tempsenha[11], arquivoCorreto;
 	int logado=1, resp, tempCPF;
 	user pesq;
 	printf("----Area de Login----\n\n");
@@ -110,8 +132,10 @@ void login(){
 			do{
 				printf("Digite seu CPF: ");
 				scanf("%i", &tempCPF);
-
-				pesq = pesquisaUser(fclientes, tempCPF);
+				
+				arquivoCorreto = verifica_arquivo(tempCPF);
+				
+				pesq = pesquisaUser(arquivoCorreto, tempCPF);
 				if(pesq.cpf == tempCPF){
 
 					do{
@@ -120,6 +144,7 @@ void login(){
 
 						if (strlen(pesq.password) == strlen(tempsenha) && strcmp(pesq.password, tempsenha) == 0){
 							printf("Login concluido! \n \n");
+							getchar();
 						}
 						else{
 							printf("Senha incorreta! \n \n");
@@ -136,13 +161,11 @@ void login(){
 		else{
 			printf("Entrada invalida!");
 		}
-	}
 }
 
 int main(){
 
 	login();
-
 	printf("teste concluido");
 
     return 0;
