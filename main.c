@@ -11,24 +11,33 @@ typedef struct{
 	char nome[101];
 	int idade;
 	int cpf;
-	char id[100];
 	char password[11];
 } user;
+	
+user pesquisaUser(char *arquivo, int cpf){
 
-void login_cadastro(){
+	FILE *arq = fopen(arquivo, "r");
 	user tmp;
-	char tmppass[10];
-	int resp = 0, iguais;
-
 	
+	while(!feof(arq)){
+		fscanf(arq, "%s %i %i %s", tmp.nome, &tmp.idade, &tmp.cpf, tmp.password);
+		if(cpf == tmp.cpf){
+			break;
+		}
+		else{
+			tmp.cpf = -1;
+		}
+	}
+	fclose(arq);
+	return tmp;
+}
 
-    printf("NOVO CADASTRO! \n");
+void login_cadastro_criaInfos(char *arquivo){
+	int iguais;
+	char tmppass[11];
+	user tmp;
 
-	printf("Voce e um novo cliente, ou corretor? \n 1 - cliente \n 2 - corretor \n \n Escolha: ");
-	scanf("%i", &resp);
-	
-	if(resp == 1){
-
+	// começa perguntando dados
 		printf("Digite seu nome: ");
 		scanf("%s", tmp.nome);
 
@@ -37,75 +46,46 @@ void login_cadastro(){
 		scanf("%i", &tmp.idade);
 		
 		printf("Digite seu CPF: ");
-		scanf("%i", &tmp.cpf);
-		
-		printf("Escolha um ID para login (ele dever ter no maximo 50 caracteres): ");
-		scanf("%s", tmp.id);
-
-		do{
+		scanf("%i", &tmp.cpf);	
+		do {
 			iguais = 1;
-			printf("Crie uma senha (ela deve ter no maximo 10 caracteres): ");
-			scanf("%s", tmp.password);
+			printf("Crie uma senha (ela deve ter no máximo 10 caracteres): ");
+			scanf("%s", tmp.password); 
 
 			printf("Confirme sua nova senha: ");
-			scanf("%s", tmppass);
+			scanf("%s", tmppass); 
 
-			for(int count = 0; count <= strlen(tmp.password); count++){
-				if (tmp.password[count] != tmppass[count]){
-					iguais = 0;
-					break;
-				}
+			// Verifica se as senhas têm o mesmo comprimento e se são iguais
+			if (strlen(tmp.password) != strlen(tmppass) || strcmp(tmp.password, tmppass) != 0) {
+				iguais = 0;
+				printf("\nAs senhas não conferem! Tente novamente.\n\n");
 			}
-			if(iguais == 0){
-				printf("As senhas nao conferem! Tente novamente \n \n");
-			}
-		}while(iguais == 0);
+		} while (iguais == 0);
 
-		FILE *arq = fopen(fclientes, "w");
+		FILE *arq = fopen(arquivo, "a+"); //abre o arquivo para escrita
 
-		fprintf(arq, "%s %i %i %s %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.id, tmp.password);
+		
+		if(arq!= NULL){
+			fprintf(arq, "%s %i %i %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
+		}
         fclose(arq);
 		printf("Cadastro concluido com sucesso!");
 		getchar();	/*Pausa para que o usuário veja o código*/
+}
+
+void login_cadastro(){
+	int resp;
+
+    printf("NOVO CADASTRO! \n");
+
+	printf("Novo cliente ou corretor? \n 1 - cliente \n 2 - corretor \n \n Escolha: "); //pergunta o tipo de usuario
+	scanf("%i", &resp);
+	
+	if(resp == 1){
+		login_cadastro_criaInfos(fclientes);
 	}
 	else if(resp == 2){
-		printf("Digite seu nome: ");
-		scanf("%s", tmp.nome);
-		
-		printf("Digite sua idade: ");
-		scanf("%i", &tmp.idade);
-		
-		printf("Digite seu CPF: ");
-		scanf("%i", &tmp.cpf);
-		
-		printf("Escolha um ID para login (ele dever ter no maximo 50 caracteres): ");
-		scanf("%s", tmp.id);
-
-		do{
-			iguais = 1;
-			printf("Crie uma senha (ela deve ter no maximo 10 caracteres): ");
-			scanf("%s", tmp.password);
-
-			printf("Confirme sua nova senha: ");
-			scanf("%s", tmppass);
-
-			for(int count = 0; count <= strlen(tmp.password); count++){
-				if (tmp.password[count] != tmppass[count]){
-					iguais = 0;
-					break;
-				}
-			}
-			if(iguais == 0){
-				printf("As senhas nao conferem! Tente novamente \n \n");
-			}
-		}while(iguais == 0);
-
-		FILE *arq = fopen(fcorretores, "w");
-
-		fprintf(arq, "%s %i %i %s %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.id, tmp.password);
-        fclose(arq);
-		printf("Cadastro concluido com sucesso!");
-		getchar();
+		login_cadastro_criaInfos(fcorretores);
 	}
 	else{
 		printf("Entrada iválida!");
@@ -113,81 +93,57 @@ void login_cadastro(){
 }
 
 void login(){
-	char tempID[101], tempPass[11];
-	user usuario;
-    int resp, tempresp, logado = 1, iguais = 0;
-	
+	char tempsenha[11];
+	int logado=1, resp, tempCPF;
+	user pesq;
 	printf("----Area de Login----\n\n");
+
 	
-    while(logado = 1){
+    while(logado == 1){ //quando conseguir logar, "logado vai ficar = a 0"
 		printf("Possui login ou deseja cadastrar? \n \n 1 - Login \n 2 - Cadastrar \n \n Escolha: ");
 		scanf("%i", &resp);
-		getchar();
 		
 		if(resp == 2){
 			login_cadastro();
 		}
-		else if (resp ==1){
-			printf("Logar como cliente ou corretor? \n \n 1 - Cliente \n 2 - Corretor \n \n Escolha: ");
-			scanf("%i", &tempresp);
+		else if(resp == 1){
+			do{
+				printf("Digite seu CPF: ");
+				scanf("%i", &tempCPF);
 
-			if (tempresp == 1)
-			{
-				printf("Digite o ID de usuario: ");
-				scanf("%s", tempID);
+				pesq = pesquisaUser(fclientes, tempCPF);
+				if(pesq.cpf == tempCPF){
 
-				FILE* arq = fopen(fclientes, "r");
-				while(!feof(arq)){
-					fscanf(arq, "%s %i %i %s %s", usuario.nome, &usuario.idade, &usuario.cpf, usuario.id, usuario.password);
-					for(int i=0; i < strlen(tempID); i++){
-						if (usuario.id[i] == tempID[i]){
-							iguais = 1;			
+					do{
+						printf("Digite sua senha: ");
+						scanf("%s", tempsenha);
+
+						if (strlen(pesq.password) == strlen(tempsenha) && strcmp(pesq.password, tempsenha) == 0){
+							printf("Login concluido! \n \n");
 						}
 						else{
-							printf("não encontrado");
-							break;
+							printf("Senha incorreta! \n \n");
 						}
-					}
+					}while(strlen(pesq.password) != strlen(tempsenha) || strcmp(pesq.password, tempsenha) != 0);
+					logado = 0;
 				}
-				if(iguais == 1){
-					usuario.id = tempID;
-					printf("digite a senha: ");
-					scanf("%s", tempPass);
-					while(!feof(arq)){
-						fscanf(arq, "%s %i %i %s %s", usuario.nome, &usuario.idade, &usuario.cpf, usuario.id, usuario.password);
-						senhacorreta = 
-						if (te{
-							iguais = 1;			
-						}
-						else{
-							printf("incorreto!");
-							break;
-						}
-					}
+				else{
+					printf("CPF nao encontrado \n \n");
 				}
-					}
-					else{
-						printf("acho nao painho");
-					}
+			}while (pesq.cpf == -1);
 			
-				fclose(arq);
-			}
-			else if (tempresp == 2){
-				/* code */
-			}
-			else{
-				printf("Entrada inválida");
-			}
 		}
 		else{
-			printf("entrada invalida!");
-		}			
-    }
-	
+			printf("Entrada invalida!");
+		}
+	}
 }
 
-int main()
-{
-    login();
+int main(){
+
+	login();
+
+	printf("teste concluido");
+
     return 0;
 }
