@@ -10,35 +10,41 @@
 typedef struct{
 	char nome[101];
 	int idade;
-	int cpf;
+	char cpf[12];
 	char password[11];
 } user;
 
-user pesquisaUser(char *arquivo, int cpf){
+char cpf_user[12];
+
+void atualiza_dado(char *var, char *novoValor){
+	strcpy(var, novoValor);
+}
+
+user pesquisaUser(char *arquivo, char *cpf){
 
 	FILE *arq = fopen(arquivo, "r");
 	user tmp;
 	
 	while(!feof(arq)){
-		fscanf(arq, "%s %i %i %s", tmp.nome, &tmp.idade, &tmp.cpf, tmp.password);
-		if(cpf == tmp.cpf){
+		fscanf(arq, "%s %i %s %s", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
+		if(strlen(cpf) == strlen(tmp.cpf) && strcmp(cpf, tmp.cpf) ==0){
 			break;
 		}
 		else{
-			tmp.cpf = -1;
+			strcpy(tmp.cpf, "-1");
 		}
 	}
 	fclose(arq);
 	return tmp;
 }
 
-int verificaCPF(int cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf não estiver cadastrad
+int verificaCPF(char *cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf não estiver cadastrado
 	user tmp;
 	int pode;
 	tmp = pesquisaUser(fclientes, cpf);
-	if (tmp.cpf == -1){
+	if (strcmp(tmp.cpf, "-1") == 0){
 		tmp = pesquisaUser(fcorretores, cpf);
-		if (tmp.cpf == -1){
+		if (strcmp(tmp.cpf, "-1") == 0){
 			pode = 0; // pode cadastrar o cpf
 		}
 	}
@@ -62,7 +68,7 @@ void login_cadastro_criaInfos(char *arquivo){
 	scanf("%i", &tmp.idade);
 	
 	printf("Digite seu CPF: ");
-	scanf("%i", &tmp.cpf);
+	scanf("%s", tmp.cpf);
 
 	podeusarcpf = verificaCPF(tmp.cpf);
 
@@ -85,10 +91,10 @@ void login_cadastro_criaInfos(char *arquivo){
 
 	
 		if(arq != NULL){
-			fprintf(arq, "%s %i %i %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
+			fprintf(arq, "%s %i %s %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
 		}
 		fclose(arq);
-		printf("Cadastro concluido com sucesso!");
+		printf("Cadastro concluido com sucesso! \n \n");
 		getchar();	/*Pausa para que o usuário veja o código*/
 	}
 	else{
@@ -116,10 +122,10 @@ void login_cadastro(){
 }
 
 void login(){
-	char tempsenha[11];
-	int logado=1, resp, tempCPF;
+	char tempsenha[11], tempCPF[12];
+	int logado=1, resp;
 	user pesq;
-	printf("----Area de Login----\n\n");
+	printf("Area de Login\n\n");
 
 	
     while(logado == 1){ //quando conseguir logar, "logado vai ficar = a 0"
@@ -132,25 +138,25 @@ void login(){
 		else if(resp == 1){
 			do{
 				printf("Digite seu CPF: ");
-				scanf("%i", &tempCPF);
+				scanf("%s", tempCPF);
 				
 				pesq = pesquisaUser(fclientes, tempCPF);
-				if(pesq.cpf == -1){//retorna -1 casoo não seja encontrado
+				if(strcmp(pesq.cpf, "-1") == 0){//retorna -1 casoo não seja encontrado
 					pesq = pesquisaUser(fcorretores, tempCPF);
-					if(pesq.cpf == -1){
+					if(strcmp(pesq.cpf, "-1") == 0){
 						printf("usuario não encontrado");
 						break;
 					}
 				}
-				
-				if(pesq.cpf == tempCPF){
+				if(strlen(pesq.cpf) == strlen(tempCPF) && strcmp(pesq.cpf, tempCPF) == 0) //pesq.cpf == tempCPF
+				{
 					do{
 						printf("Digite sua senha: ");
 						scanf("%s", tempsenha);
 
 						if (strlen(pesq.password) == strlen(tempsenha) && strcmp(pesq.password, tempsenha) == 0){
 							printf("Login concluido! \n \n");
-							getchar();
+							atualiza_dado(cpf_user, pesq.cpf);
 						}
 						else{
 							printf("Senha incorreta! \n \n");
@@ -161,18 +167,20 @@ void login(){
 				else{
 					printf("CPF nao encontrado \n \n");
 				}
-			}while (pesq.cpf == -1);
-			
+			}while (strcmp(pesq.cpf, "-1") == 0);
 		}
 		else{
-			printf("Entrada invalida!");
+			printf("Entrada invalida! \n \n");
 		}
 	}
 }
 
+
 int main(){
+	strcpy(cpf_user, "nada");
 
+	printf("cpf antes: %s \n \n", cpf_user);
 	login();
-
+	printf("cpf depois: %s \n \n", cpf_user);
     return 0;
 }
