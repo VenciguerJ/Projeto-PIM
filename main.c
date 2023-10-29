@@ -16,11 +16,11 @@ typedef struct{
 
 char cpf_user[12];
 
-void atualiza_dado(char *var, char *novoValor){
+void atualiza_dado(char *var, char *novoValor){ // atualiza o CPF para ser usado na MAIN
 	strcpy(var, novoValor);
 }
 
-user pesquisaUser(char *arquivo, char *cpf){
+user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario
 
 	FILE *arq = fopen(arquivo, "r");
 	user tmp;
@@ -54,7 +54,7 @@ int verificaCPF(char *cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf
 	return pode;
 }
 
-void login_cadastro_criaInfos(char *arquivo){
+void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadastro do usuário
 	int iguais, podeusarcpf;
 	char tmppass[11];
 	user tmp;
@@ -102,7 +102,7 @@ void login_cadastro_criaInfos(char *arquivo){
 	}
 }
 
-void login_cadastro(){
+void login_cadastro(){ // função que direciona o arquivo de cadastro corretamente
 	int resp;
 
     printf("NOVO CADASTRO! \n");
