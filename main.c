@@ -177,10 +177,18 @@ void login(){
 
 
 int main(){
-	strcpy(cpf_user, "nada");
-
-	printf("cpf antes: %s \n \n", cpf_user);
+	user usuario;
+	strcpy(cpf_user, "");
 	login();
-	printf("cpf depois: %s \n \n", cpf_user);
+	usuario = pesquisaUser(fclientes,cpf_user);
+	if (strcmp(usuario.cpf, "-1")!=0){
+		printf("menu de clientes");
+	}
+	else{
+		usuario = pesquisaUser(fcorretores,cpf_user);
+		if(strcmp(usuario.cpf, "-1")!=0){
+			printf("menu de corretores");
+		}
+	}
     return 0;
 }
