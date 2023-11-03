@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <locale.h>
-#include <iostream>
+#include <stdlib.h>
 #include <windows.h>
 
 #define fimoveis "imoveis.txt"
@@ -10,12 +10,45 @@
 typedef struct{
 	char nome[101];
 	int idade;
-	char cpf[12];
+	char cpf[12]; // CPF está sendo uma string pois a quantidade de digitos não consegue ser armazenada em uma única int
 	char password[11];
 } user;
 
+typedef struct{
+	char endereco[999];
+	char bairro[90];	
+	char donoDoImovel[101];
+	int tamanho; //em metros quadrados
+	int valorDeVenda;
+	int ValorDeAluguel;
+	int qntdComodos;
+}imovel;
+
+
 char cpf_user[12];
 
+//funnções úteis
+void TirarEspaco(char *texto) // usado para recolocar o espaço na hora de demonstrar o programa ao usuario 
+{
+    int i;
+    for (i=0;i<strlen(texto);i++){
+		if (texto[i]==' '){
+			texto[i]='+';
+		}
+		
+	}
+}
+
+void ColocarEspaco(char *texto) //função usada para adicionar um sinal do arquivo texto para não dar erros de leitura
+{
+    int i;
+    for (i=0;i<strlen(texto);i++){
+		if (texto[i]=='+'){
+			texto[i]=' ';	
+		}
+	}
+}
+//termina funções úteis e começa o login
 void atualiza_dado(char *var, char *novoValor){ // atualiza o CPF para ser usado na MAIN
 	strcpy(var, novoValor);
 }
@@ -36,6 +69,24 @@ user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario
 	}
 	fclose(arq);
 	return tmp;
+}
+
+char *pesquisaArquivo(char *cpf){ //vê qual é o arquivo que está o cpf
+	user tmp;
+    char *arqcorreto = NULL;
+
+    tmp = pesquisaUser(fclientes, cpf);
+    if (strcmp(tmp.cpf, "-1") != 0) {
+        arqcorreto = (char *)malloc(strlen(fclientes) + 1); // Aloca memória para arqcorreto
+        strcpy(arqcorreto, fclientes);
+    } else {
+        tmp = pesquisaUser(fcorretores, cpf);
+        if (strcmp(tmp.cpf, "-1") != 0) {
+            arqcorreto = (char *)malloc(strlen(fcorretores) + 1); // Aloca memória para arqcorreto
+            strcpy(arqcorreto, fcorretores);
+        }
+    }
+    return arqcorreto;
 }
 
 int verificaCPF(char *cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf não estiver cadastrado
@@ -61,8 +112,13 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 	
 	// começa perguntando dados
 	printf("Digite seu nome: ");
-	scanf("%s", tmp.nome);
-
+	getchar();
+	fgets(tmp.nome, sizeof(tmp.nome), stdin);
+    size_t tamanho = strlen(tmp.nome);
+    if (tamanho > 0 && tmp.nome[tamanho - 1] == '\n'){
+        tmp.nome[tamanho - 1] = '\0';
+    }
+	TirarEspaco(tmp.nome);
 
 	printf("Digite sua idade: ");
 	scanf("%i", &tmp.idade);
@@ -105,7 +161,7 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 void login_cadastro(){ // função que direciona o arquivo de cadastro corretamente
 	int resp;
 
-    printf("NOVO CADASTRO! \n");
+    printf("\n NOVO CADASTRO! \n \n");
 
 	printf("Novo cliente ou corretor? \n 1 - cliente \n 2 - corretor \n \n Escolha: "); //pergunta o tipo de usuario
 	scanf("%i", &resp);
@@ -174,21 +230,140 @@ void login(){
 		}
 	}
 }
+//termina login e começa os menus
+void ver_perfil(){ // módulo do perfil
+	int resp, resp2;
+	user tmp, usuario;
+	char *arquser;
+	arquser = pesquisaArquivo(cpf_user);
+	usuario = pesquisaUser(arquser, cpf_user);
+
+	FILE *arq = fopen(arquser, "r");
+	FILE *tmparq = fopen("temp.txt", "w");
+
+
+	printf("Perfil do usuario: \n");
+	
+	ColocarEspaco(usuario.nome);
+	printf("Nome: %s \n", usuario.nome);
+	printf("Idade: %i \n", usuario.idade);
+	printf("CPF: %s \n \n", usuario.cpf);
+	
+	do{
+		printf("1 - excluir usuario\n2 - Editar perfil\n3 - sair\n\nEscolha: ");
+		scanf("%i", &resp);
+	
+		if(resp == 1){
+		printf("Confirma a exlusão deste usuário?\n\n1 - sim\n2 - não\n\nEscolha: ");
+		scanf("%i",&resp2);
+		if(resp2 == 1){
+			while(!feof(arq)){
+				fscanf(arq, "%s %i %s %s \n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
+				if(tmp.cpf != usuario.cpf){
+					fprintf(tmparq, "%s %i %s %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
+				}
+			}
+			fclose(arq);
+			fclose(tmparq);
+			
+			char comando1[100];
+			snprintf(comando1, sizeof(comando1), "del %s", arquser);
+			char comando2[100];
+			snprintf(comando2, sizeof(comando2), "rename temp.txt %s", arquser);
+			free(arquser);
+
+			system(comando1);
+			system(comando2);
+		}
+	}
+	} while (resp != 3);
+	
+}
+
+int menu_cliente(){
+	
+	int resp;
+	
+	printf("1 - Buscar imoveis\n2 - Propostas e alugueis\n3 - Ver perfil\n4 - Sair\n\nEscolha: ");
+	scanf("%i", &resp);
+	return resp;
+}
+
+int menu_corretor(){
+	int resp;
+	
+	printf("1 - Buscar imoveis\n2 - Cadastrar imoveis\n3 - Propostas e alugueis\n4 - Ver perfil\n5 - Sair\n\nEscolha: ");
+	scanf("%i", &resp);
+	return resp;
+}
 
 
 int main(){
-	user usuario;
+	setlocale(LC_ALL, "Portuguese");
+	user usuario; //variável global que armazena o CPF na main
 	strcpy(cpf_user, "");
 	login();
-	usuario = pesquisaUser(fclientes,cpf_user);
-	if (strcmp(usuario.cpf, "-1")!=0){
-		printf("menu de clientes");
-	}
-	else{
-		usuario = pesquisaUser(fcorretores,cpf_user);
-		if(strcmp(usuario.cpf, "-1")!=0){
-			printf("menu de corretores");
+
+	usuario = pesquisaUser(fclientes, cpf_user);
+
+	int resp;
+	//se o cpf_user etiver vaizo coloca no switch case o 4 ou o 5
+	
+	if (strcmp(usuario.cpf,"-1")!=0){//identifica se o cpf está na database de clientes
+		while(resp !=4){
+			resp = menu_cliente();
+			
+			switch(resp){
+				case 1:
+					printf("buscar imóveis");
+					break;
+				case 2:
+					printf("Propostas e alugueis");
+					break;
+				case 3:
+					ver_perfil();
+					break;
+				case 4:
+					printf("Até breve!");
+					break;
+				default:
+					printf("entrada invalida");
+					break;
+			}
 		}
 	}
-    return 0;
+	else{
+		usuario = pesquisaUser(fcorretores, cpf_user); 
+		if(strcmp(usuario.cpf,"-1")!=0){ //identifica se o cpf está na database de corretores
+			
+			while(resp !=5){
+				resp = menu_corretor();
+				
+				switch(resp){
+					case 1:
+						printf("buscar imoveis");
+						break;
+					case 2:
+						printf("Cadastrar imoveis");
+						break;
+					case 3:
+						printf("Propostas e alugueis");
+						break;
+					case 4:
+						ver_perfil();
+						break;
+					case 5:
+						printf("Até breve!");
+						break;
+					default:
+						printf("entrada invalida");
+						break;
+				}
+			}
+		}
+		else{
+			printf("Usuario nao encontrado");
+		}
+	}
+	return 0;
 }
