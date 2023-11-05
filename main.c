@@ -28,8 +28,8 @@ typedef struct{
 char cpf_user[12];
 
 //funnções úteis
-void TirarEspaco(char *texto) // usado para recolocar o espaço na hora de demonstrar o programa ao usuario 
-{
+void TirarEspaco(char *texto){ // usado para recolocar o espaço na hora de demonstrar o programa ao usuario 
+
     int i;
     for (i=0;i<strlen(texto);i++){
 		if (texto[i]==' '){
@@ -39,8 +39,7 @@ void TirarEspaco(char *texto) // usado para recolocar o espaço na hora de demon
 	}
 }
 
-void ColocarEspaco(char *texto) //função usada para adicionar um sinal do arquivo texto para não dar erros de leitura
-{
+void ColocarEspaco(char *texto){ //função usada para adicionar um sinal do arquivo texto para não dar erros de leitura
     int i;
     for (i=0;i<strlen(texto);i++){
 		if (texto[i]=='+'){
@@ -59,7 +58,7 @@ user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario
 	user tmp;
 	
 	while(!feof(arq)){
-		fscanf(arq, "%s %i %s %s", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
+		fscanf(arq, "%s %i %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
 		if(strlen(cpf) == strlen(tmp.cpf) && strcmp(cpf, tmp.cpf) ==0){
 			break;
 		}
@@ -123,7 +122,7 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 	printf("Digite sua idade: ");
 	scanf("%i", &tmp.idade);
 	
-	printf("Digite seu CPF: ");
+	printf("Digite seu CPF (apenas numeros): ");
 	scanf("%s", tmp.cpf);
 
 	podeusarcpf = verificaCPF(tmp.cpf);
@@ -131,9 +130,14 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 	if(podeusarcpf == 0){
 		do {
 			iguais = 1;
-			printf("Crie uma senha (ela deve ter no máximo 10 caracteres): ");
-			scanf("%s", tmp.password); 
-
+			do{
+				printf("Crie uma senha (ela deve ter no maximo 10 caracteres): ");
+				scanf("%s", tmp.password);
+				getchar();
+				if(strlen(tmp.password)>10){
+					printf("senha muito longa\n");
+				} 
+			}while (strlen(tmp.password)>10);
 			printf("Confirme sua nova senha: ");
 			scanf("%s", tmppass); 
 
@@ -147,7 +151,7 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 
 	
 		if(arq != NULL){
-			fprintf(arq, "%s %i %s %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
+			fprintf(arq, "%s %i %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
 		}
 		fclose(arq);
 		printf("Cadastro concluido com sucesso! \n \n");
@@ -231,17 +235,46 @@ void login(){
 	}
 }
 //termina login e começa os menus
+void edita_arquivo(char *arquivo, user usuario){ //arquivo a ser editado e cpf a sofrer a alteração
+	user tmp; // usuario temporário
+	FILE *arq = fopen(arquivo, "r");
+	FILE *tmparq = fopen("temp.txt", "a+");
+
+	while(!feof(arq)){
+		fscanf(arq, "%s %i %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
+		if(strlen(usuario.cpf)!=strlen(tmp.cpf)&&strcmp(usuario.cpf, tmp.cpf)!=0){
+			fprintf(tmparq, "%s %i %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
+		}
+	}
+	fprintf(tmparq, "%s %i %s %s\n", usuario.nome, usuario.idade, usuario.cpf, usuario.password);
+
+	fclose(arq);
+	fclose(tmparq);
+	remove(arquivo);
+	rename("temp.txt", arquivo);
+}
+
+void remove_do_arquivo(char *arquivo, user usuario){ //tira o cpf do arquivo 
+	user tmp;
+	FILE *arq = fopen(arquivo, "r");
+	FILE *tmparq = fopen("temp.txt", "a+");
+	
+	fscanf(arq, "%s %i %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
+	if(strlen(usuario.cpf)!=strlen(tmp.cpf)&&strcmp(usuario.cpf, tmp.cpf)!=0){
+		fprintf(tmparq, "%s %i %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
+	} 
+	fclose(arq);
+	fclose(tmparq);
+	remove(arquivo);
+	rename("temp.txt", arquivo);
+}
+
 void ver_perfil(){ // módulo do perfil
-	int resp, resp2;
-	user tmp, usuario;
+
+	int resp=0, resp2, resp3;
 	char *arquser;
 	arquser = pesquisaArquivo(cpf_user);
-	usuario = pesquisaUser(arquser, cpf_user);
-
-	FILE *arq = fopen(arquser, "r");
-	FILE *tmparq = fopen("temp.txt", "w");
-
-
+	user usuario = pesquisaUser(arquser, cpf_user);
 	printf("Perfil do usuario: \n");
 	
 	ColocarEspaco(usuario.nome);
@@ -253,50 +286,113 @@ void ver_perfil(){ // módulo do perfil
 		printf("1 - excluir usuario\n2 - Editar perfil\n3 - sair\n\nEscolha: ");
 		scanf("%i", &resp);
 	
-		if(resp == 1){
-		printf("Confirma a exlusão deste usuário?\n\n1 - sim\n2 - não\n\nEscolha: ");
-		scanf("%i",&resp2);
-		if(resp2 == 1){
-			while(!feof(arq)){
-				fscanf(arq, "%s %i %s %s \n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
-				if(tmp.cpf != usuario.cpf){
-					fprintf(tmparq, "%s %i %s %s \n", tmp.nome, tmp.idade, tmp.cpf, tmp.password);
+		if(resp == 1){ // exclusão de usuário
+			printf("Confirma a exlusão deste usuário?\n\n1 - sim\n2 - não\n\nEscolha: ");
+			scanf("%i",&resp2);
+			if(resp2 == 1){
+				remove_do_arquivo(arquser, usuario);
+			}
+		}
+		else if(resp == 2){ // alteração do usuário
+			printf("EDIÇÃO DE USUARIO\n\n1 - Nome\n2 - Idade\n3 - CPF\n4 - Senha\n\nEscolha: ");
+			scanf("%i", &resp2);
+			
+			if(resp2==1){//nome
+				char tempname[101];
+				printf("\nQual e o novo nome?: ");
+				getchar();
+				fgets(tempname, sizeof(tempname), stdin); //pega a linha inteira
+				size_t tamanho = strlen(tempname);
+    			if (tamanho > 0 && tempname[tamanho - 1] == '\n'){
+        			tempname[tamanho - 1] = '\0'; //termina a linha no final da string
+    			}
+				TirarEspaco(tempname);
+				if(strlen(usuario.nome)==strlen(tempname)&&strcmp(usuario.nome, tempname)==0){
+					printf("Nomes iguais!");
+				}
+				else{
+					// termina de perguntar dados e começa a tratar os dados
+					printf("Confirma alteração?\n1 - Sim\n2 - Nao\n\nEscolha: ");
+					scanf("%i",&resp3);
+					if(resp3==1){
+						strcpy(usuario.nome,tempname);
+						edita_arquivo(arquser, usuario);	
+					}
+					
 				}
 			}
-			fclose(arq);
-			fclose(tmparq);
+			else if(resp2==2){
+				int tempidade;
+				printf("Qual e a nova idade?: ");
+				scanf("%i",&tempidade);
+				printf("Confirma alteracao?\n1 - Sim\n2 - Nao\n\nEscolha: ");
+				scanf("%i",&resp3);
+				if(resp3==1){
+					usuario.idade = tempidade;
+					edita_arquivo(arquser, usuario);
+				}
+			}
+			else if(resp2==3){//altera cpf
+				char tempcpf[12];
+				printf("Qual e o novo CPF?: ");
+				scanf("%s",tempcpf);
+				printf("Confirma alteração?\n1 - Sim\n2 - Nao\n\nEscolha: ");
+				scanf("%i",&resp3);
+				if(resp3==1){
+					strcpy(usuario.cpf,tempcpf);
+					atualiza_dado(cpf_user,usuario.cpf);
+					edita_arquivo(arquser, usuario);
+				}
+			}
+			else if(resp2==4){//alterasenha
+				char temppassword[10];
+				char temppassword2[10];
+				printf("Digite sua senha:");
+				scanf("%s", temppassword);
+				
+				if(strlen(temppassword)==strlen(usuario.password)&&strcmp(temppassword, usuario.password)==0){
+					printf("Qual e a nova senha?: ");
+					scanf("%s", temppassword2);
+					printf("confirma alteracao da nova senha?:\n1 - Sim\n2 - Nao\n\nEscolha: ");
+					scanf("%i",&resp3);
+					if(resp3==1){
+						strcpy(usuario.password,temppassword2);
+						edita_arquivo(arquser, usuario);
+					}
+				}
+				else{
+					printf("senha incorreta, operation cancelled\n\n");
+				}
+			}
+			else{
+				printf("Entrada invalida!\n\n");
+			}
 			
-			char comando1[100];
-			snprintf(comando1, sizeof(comando1), "del %s", arquser);
-			char comando2[100];
-			snprintf(comando2, sizeof(comando2), "rename temp.txt %s", arquser);
-			free(arquser);
-
-			system(comando1);
-			system(comando2);
+			printf("Alteracao realizada com sucesso! Por favor, reinicie o sistema para que as alteracoes sejam gravadas!\n\n");
 		}
-	}
-	} while (resp != 3);
-	
+		else if(resp==3){
+			printf("saindo");
+		}
+		else{
+			printf("Entrada invalida");
+		}
+	} while(resp!=3);	
+	free(arquser);
 }
 
 int menu_cliente(){
-	
 	int resp;
-	
 	printf("1 - Buscar imoveis\n2 - Propostas e alugueis\n3 - Ver perfil\n4 - Sair\n\nEscolha: ");
 	scanf("%i", &resp);
 	return resp;
 }
 
 int menu_corretor(){
-	int resp;
-	
+	int resp;	
 	printf("1 - Buscar imoveis\n2 - Cadastrar imoveis\n3 - Propostas e alugueis\n4 - Ver perfil\n5 - Sair\n\nEscolha: ");
 	scanf("%i", &resp);
 	return resp;
 }
-
 
 int main(){
 	setlocale(LC_ALL, "Portuguese");
@@ -307,7 +403,6 @@ int main(){
 	usuario = pesquisaUser(fclientes, cpf_user);
 
 	int resp;
-	//se o cpf_user etiver vaizo coloca no switch case o 4 ou o 5
 	
 	if (strcmp(usuario.cpf,"-1")!=0){//identifica se o cpf está na database de clientes
 		while(resp !=4){
@@ -315,7 +410,7 @@ int main(){
 			
 			switch(resp){
 				case 1:
-					printf("buscar imóveis");
+					printf("buscar imoveis");
 					break;
 				case 2:
 					printf("Propostas e alugueis");
@@ -324,7 +419,7 @@ int main(){
 					ver_perfil();
 					break;
 				case 4:
-					printf("Até breve!");
+					printf("Ate breve!");
 					break;
 				default:
 					printf("entrada invalida");
