@@ -12,6 +12,8 @@ typedef struct{
 	int idade;
 	char cpf[12]; // CPF está sendo uma string pois a quantidade de digitos não consegue ser armazenada em uma única int
 	char password[11];
+	char nrocllr[15];
+	char email[101]; 
 } user;
 
 typedef struct{
@@ -32,6 +34,9 @@ typedef struct{
     float valor; 
 } imovel;
 
+char cpf_user[12]; //cpf do usuario logado
+
+//começa funções de imoveis
 void imprimir_dados(imovel a){
     printf("Identificacao Imovel: %i\n", a.nroimovel);
     printf("Endereco: %s\n", a.endereco);
@@ -50,13 +55,13 @@ void imprimir_dados(imovel a){
     printf("Valor do imovel: %f\n", a.valor);
 }
 
-void removerIMOVEL(char *arquivo, int numimovel, int cep2){
+void removerIMOVEL(char *arquivo, int numimovel, char *cep2){
     imovel tmp;
     FILE* arq = fopen(arquivo,"r");
     FILE* arqNovo = fopen("novo.txt","w"); 
     while(!feof(arq)){
 	    fscanf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
-        if (tmp.nroimovel!=numimovel && tmp.cep != cep2){
+        if (tmp.nroimovel!=numimovel && strcmp(tmp.cep, cep2)!=0){
             fprintf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, tmp.metragemtotal, tmp.metragemconstruido, tmp.numerodequartos, tmp.numerodesiutes, tmp.numerodesalas, tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, tmp.valor);
         }
     }
@@ -66,15 +71,14 @@ void removerIMOVEL(char *arquivo, int numimovel, int cep2){
     system("rename novoemp.txt imoveis.txt");
 }
 
-
-imovel pesquisaIMOVEL(char *arquivo, int nroimovel, int cep){
+imovel pesquisaIMOVEL(char *arquivo, int numimovel, char *cep2){
 
 	FILE *arq = fopen(arquivo, "r");
 	imovel tmp;
 	
 	while(!feof(arq)){
 		fscanf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
-		if(cep2 == tmp.cep && numimovel == tmp.nroimovel){
+		if(strcmp(cep2, tmp.cep)==0 && numimovel == tmp.nroimovel){
 			break;
 		}
 		else{
@@ -91,8 +95,8 @@ int qtd_imoveis(char *arquivo){
     imovel tmp;
     int c = 0;
     while (!feof(arq)){
-        fscanf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, &tmp.valor);
-        c++;
+        fscanf(arq, "%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
+        c++; 
     }
     fclose(arq);
     return c;
@@ -158,15 +162,16 @@ void imovel_cadastro_criaInfos(char *arquivo){
 
 void consultaIMOVEL(char *arquivo){
     imovel consulta;
-    int nroimovel, cep;
+    int nroimovel;
+	char *cep;
     printf("Consulta de imoveis \n\n");
     printf("Informe o codigo de identificacao do imovel: ");
     scanf("%i", &nroimovel);
     getchar();
     printf("Informe o CEP do imovel: ");
-    scanf("%i", &cep);
-    consulta = pesquisar(arquivo, nroimovel, cep);
-    if(pesq.matricula!=-1)
+    scanf("%s", cep);
+    consulta = pesquisaIMOVEL(arquivo, nroimovel, cep);
+    if(consulta.nroimovel!=-1)
     {
     printf("\n\n");
     imprimir_dados(consulta);
@@ -176,11 +181,7 @@ void consultaIMOVEL(char *arquivo){
     printf("Imovel nao encontrado!\n\n");
     }
 }
-
-
-char cpf_user[12];
-
-//funnções úteis
+//Termina imoveis e começa funnções úteis
 void TirarEspaco(char *texto){ // usado para recolocar o espaço na hora de demonstrar o programa ao usuario 
 
     int i;
@@ -205,7 +206,7 @@ void atualiza_dado(char *var, char *novoValor){ // atualiza o CPF para ser usado
 	strcpy(var, novoValor);
 }
 
-user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario
+user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario XXX
 
 	FILE *arq = fopen(arquivo, "r");
 	user tmp;
@@ -257,7 +258,7 @@ int verificaCPF(char *cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf
 	return pode;
 }
 
-void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadastro do usuário
+void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadastro do usuário XXX
 	int iguais, podeusarcpf;
 	char tmppass[11];
 	user tmp;
@@ -300,6 +301,7 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 				printf("\nAs senhas não conferem! Tente novamente.\n\n");
 			}
 		} while (iguais == 0);
+		
 		FILE *arq = fopen(arquivo, "a+"); //abre o arquivo para escrita
 
 	
@@ -388,7 +390,7 @@ void login(){
 	}
 }
 //termina login e começa os menus
-void edita_arquivo(char *arquivo, user usuario){ //arquivo a ser editado e cpf a sofrer a alteração
+void edita_arquivo(char *arquivo, user usuario){ //arquivo a ser editado e cpf a sofrer a alteração XXX
 	user tmp; // usuario temporário
 	FILE *arq = fopen(arquivo, "r");
 	FILE *tmparq = fopen("temp.txt", "a+");
@@ -407,7 +409,7 @@ void edita_arquivo(char *arquivo, user usuario){ //arquivo a ser editado e cpf a
 	rename("temp.txt", arquivo);
 }
 
-void remove_do_arquivo(char *arquivo, user usuario){ //tira o cpf do arquivo 
+void remove_do_arquivo(char *arquivo, user usuario){ //tira o cpf do arquivo XXX
 	user tmp;
 	FILE *arq = fopen(arquivo, "r");
 	FILE *tmparq = fopen("temp.txt", "a+");
@@ -422,7 +424,7 @@ void remove_do_arquivo(char *arquivo, user usuario){ //tira o cpf do arquivo
 	rename("temp.txt", arquivo);
 }
 
-void ver_perfil(){ // módulo do perfil
+void ver_perfil(){ // módulo do perfilXXX
 
 	int resp=0, resp2, resp3;
 	char *arquser;
