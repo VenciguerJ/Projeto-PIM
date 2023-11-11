@@ -183,19 +183,20 @@ void consultaIMOVEL(char *arquivo){
 }
 
 void menu_buscar_imoveis(){
+	system("cls");
 	printf("IMOVEIS");
 	
 	int c;
-	imovel tmp, menu[999];
+	imovel tmp, menu[9];
 	FILE *arq = fopen(fimoveis, "r");
 	
 	for(c=1;!feof(arq);c++){
-		c=1;
 		fscanf(arq, "%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
 		
+		menu[c] = 
 	}
 
-	printf("Imovel [%s] [%s] [%i] \n[%s]", tmp.estado, tmp.cidade, tmp.endereco, tmp.metragemtotal);
+	printf("Imovel [%s] [%s] [%i] \n[%s]", menu.estado, menu.cidade,menu.metragemtotal, menu.endereco);
 
 	
 
