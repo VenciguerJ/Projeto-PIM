@@ -143,12 +143,15 @@ void imovel_cadastro_criaInfos(char *arquivo){
     scanf("%s", tmp.estado);
     getchar(); 
     do{    
-        printf("Informe o CEP com 8 digitos no seguinte formar 13214774 (sem o traco): ");
+        printf("Informe o CEP com 8 digitos no seguinte formarto 13214743 (sem o traco): ");
         scanf("%s", tmp.cep);
         if(strlen(tmp.cep) != 8){
             printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
             i = 1;
-        }
+		}
+		else{
+			i = 0;
+		}
     }while(i>0);
 	getchar(); 
 	printf("Metragem do terreno total: ");
@@ -166,20 +169,26 @@ void imovel_cadastro_criaInfos(char *arquivo){
 	getchar(); 
 	do{    
         printf("Tem piscina na casa, informa S para SIM e N para NAO [S/N]: ");
-        scanf("%s", tmp.tempiscina);
-        if(tmp.tempiscina != "S" || tmp.tempiscina != "N" ){
+        scanf("%c", &tmp.tempiscina);
+        if(tmp.tempiscina != "S" || tmp.tempiscina != "N"){
             printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
             i = 1;
         }
+		else{
+			i = 0;
+		}
     }while(i>0);
 	getchar(); 
 	do{    
         printf("Tem churrasqueira na casa, informa S para SIM e N para NAO [S/N]: ");
-        scanf("%s", tmp.temchurrasqueia);
+        scanf("%c", &tmp.temchurrasqueia);
         if(tmp.temchurrasqueia != "S" || tmp.temchurrasqueia != "N" ){
             printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
             i = 1;
         }
+		else{
+			i = 0;
+		}
     }while(i>0);
 	getchar(); 
 	printf("Informe o valor do preco do imovel para venda, casas decimais devem ser informas com ponto da seguinte forma R$ 200300.33: ");
@@ -598,7 +607,7 @@ int main(){
 			
 			switch(resp){
 				case 1:
-					printf("buscar imoveis");
+					consultaIMOVEL(fimoveis);
 					break;
 				case 2:
 					printf("Propostas e alugueis");
@@ -624,10 +633,10 @@ int main(){
 				
 				switch(resp){
 					case 1:
-						printf("buscar imoveis");
+						consultaIMOVEL(fimoveis);
 						break;
 					case 2:
-						printf("Cadastrar imoveis");
+						imovel_cadastro_criaInfos(fimoveis);
 						break;
 					case 3:
 						printf("Propostas e alugueis");
