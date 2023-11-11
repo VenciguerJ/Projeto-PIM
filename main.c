@@ -39,9 +39,13 @@ char cpf_user[12]; //cpf do usuario logado
 //começa funções de imoveis
 void imprimir_dados(imovel a){
     printf("Identificacao Imovel: %i\n", a.nroimovel);
+	ColocarEspaco(a.endereco);
     printf("Endereco: %s\n", a.endereco);
+	ColocarEspaco(a.bairro);
     printf("Bairro: %s\n", a.bairro);
+	ColocarEspaco(a.cidade);
     printf("Cidade: %s\n", a.cidade);
+	ColocarEspaco(a.estado);
     printf("Estado: %s\n", a.estado);
     printf("CEP: %s\n", a.cep);
     printf("Metragem do terreno: %i\n", a.metragemtotal);
@@ -112,13 +116,28 @@ void imovel_cadastro_criaInfos(char *arquivo){
 
     printf("Vamos iniciar o cadastro de um novo imovel, coloque as inforacoes a seguir\n\n");
     printf("Endereco: ");
-    scanf("%s", tmp.endereco);
+    fgets(tmp.endereco, sizeof(tmp.endereco), stdin);
+    size_t tamanho = strlen(tmp.endereco);
+    if (tamanho > 0 && tmp.endereco[tamanho - 1] == '\n'){
+        tmp.endereco[tamanho - 1] = '\0';
+    }
+	TirarEspaco(tmp.endereco);
     getchar(); 
     printf("Bairro: ");
-    scanf("%s", tmp.bairro);
+    fgets(tmp.bairro, sizeof(tmp.bairro), stdin);
+    size_t tamanho1 = strlen(tmp.endereco);
+    if (tamanho1 > 0 && tmp.endereco[tamanho1 - 1] == '\n'){
+        tmp.endereco[tamanho1 - 1] = '\0';
+    }
+	TirarEspaco(tmp.bairro);
     getchar(); 
     printf("Cidade: ");
-    scanf("%s", tmp.cidade);
+    fgets(tmp.cidade, sizeof(tmp.cidade), stdin);
+    size_t tamanho2 = strlen(tmp.cidade);
+    if (tamanho2 > 0 && tmp.cidade[tamanho2 - 1] == '\n'){
+        tmp.cidade[tamanho2 - 1] = '\0';
+    }
+	TirarEspaco(tmp.cidade);
     getchar(); 
     printf("Estado: ");
     scanf("%s", tmp.estado);
@@ -131,7 +150,6 @@ void imovel_cadastro_criaInfos(char *arquivo){
             i = 1;
         }
     }while(i>0);
-
 	getchar(); 
 	printf("Metragem do terreno total: ");
 	scanf("%i", &tmp.metragemtotal);    
@@ -145,10 +163,25 @@ void imovel_cadastro_criaInfos(char *arquivo){
 	scanf("%i", &tmp.numerodesalas); 
 	printf("Numeros de banheiros na casa: ");
 	scanf("%i", &tmp.numerodebanheiros); 
-	printf("Tem piscina na casa, informa S para SIM e N para NAO [S/N]: ");
-	scanf("%c", &tmp.tempiscina); 
-	printf("Tem churrasqueira na casa, informa S para SIM e N para NAO [S/N]: ");
-	scanf("%c", &tmp.temchurrasqueia); 
+	getchar(); 
+	do{    
+        printf("Tem piscina na casa, informa S para SIM e N para NAO [S/N]: ");
+        scanf("%s", tmp.tempiscina);
+        if(tmp.tempiscina != "S" || tmp.tempiscina != "N" ){
+            printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
+            i = 1;
+        }
+    }while(i>0);
+	getchar(); 
+	do{    
+        printf("Tem churrasqueira na casa, informa S para SIM e N para NAO [S/N]: ");
+        scanf("%s", tmp.temchurrasqueia);
+        if(tmp.temchurrasqueia != "S" || tmp.temchurrasqueia != "N" ){
+            printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
+            i = 1;
+        }
+    }while(i>0);
+	getchar(); 
 	printf("Informe o valor do preco do imovel para venda, casas decimais devem ser informas com ponto da seguinte forma R$ 200300.33: ");
 	scanf("%f", &tmp.valor);
 	
