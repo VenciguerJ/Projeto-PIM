@@ -21,7 +21,7 @@ typedef struct{
 	char endereco[101];
     char bairro[101];
     char cidade[101];
-    char estado[2];
+    char estado[3];
     char cep[8];
 	int metragemtotal;
 	int metragemconstruido;
@@ -36,12 +36,37 @@ typedef struct{
 
 char cpf_user[12]; //cpf do usuario logado
 
+
+void TirarEspaco(char *texto){ // usado para recolocar o espaço na hora de demonstrar o programa ao usuario 
+
+    int i;
+    for (i=0;i<strlen(texto);i++){
+		if (texto[i]==' '){
+			texto[i]='+';
+		}
+		
+	}
+}
+
+void ColocarEspaco(char *texto){ //função usada para adicionar um sinal do arquivo texto para não dar erros de leitura
+    int i;
+    for (i=0;i<strlen(texto);i++){
+		if (texto[i]=='+'){
+			texto[i]=' ';	
+		}
+	}
+}
+
 //começa funções de imoveis
-void imprimir_dados(imovel a){ //dados completos do imovel
+void imprimir_dados(imovel a){
     printf("Identificacao Imovel: %i\n", a.nroimovel);
+	ColocarEspaco(a.endereco);
     printf("Endereco: %s\n", a.endereco);
+	ColocarEspaco(a.bairro);
     printf("Bairro: %s\n", a.bairro);
+	ColocarEspaco(a.cidade);
     printf("Cidade: %s\n", a.cidade);
+	ColocarEspaco(a.estado);
     printf("Estado: %s\n", a.estado);
     printf("CEP: %s\n", a.cep);
     printf("Metragem do terreno: %i\n", a.metragemtotal);
@@ -53,6 +78,10 @@ void imprimir_dados(imovel a){ //dados completos do imovel
     printf("Possui piscina: %c\n", a.tempiscina);
     printf("Possui churrasqueira: %c\n", a.temchurrasqueia);
     printf("Valor do imovel: %f\n", a.valor);
+}
+
+void imprimir_dados_resumidos(imovel a){
+	printf("Estado: [%s] Cidade: [%s] Tamanho: [%i]\n\nEndereco: [%s] Numero de quartos: [%i]", a.estado, a.cidade, a.metragemtotal, a.endereco, a.numerodequartos);
 }
 
 void removerIMOVEL(char *arquivo, int numimovel, char *cep2){
@@ -105,33 +134,40 @@ int qtd_imoveis(char *arquivo){
 void imovel_cadastro_criaInfos(char *arquivo){
     int i=0;
     imovel tmp;
-    FILE *arq = fopen(arquivo, "a+");
+    FILE *arq = fopen(arquivo, "w");
     tmp.nroimovel = qtd_imoveis(arquivo);
-	tmp.nroimovel += 1;
 
 
     printf("Vamos iniciar o cadastro de um novo imovel, coloque as inforacoes a seguir\n\n");
-    printf("Endereco: ");
-    scanf("%s", tmp.endereco);
-    getchar(); 
+	printf("Endereco: ");
+	fgets(tmp.endereco, sizeof(tmp.endereco), stdin);
+	if (tmp.endereco[strlen(tmp.endereco) - 1] == '\n'){
+    	tmp.endereco[strlen(tmp.endereco) - 1] = '\0';
+	}
+	TirarEspaco(tmp.endereco);
     printf("Bairro: ");
-    scanf("%s", tmp.bairro);
-    getchar(); 
-    printf("Cidade: ");
-    scanf("%s", tmp.cidade);
-    getchar(); 
+    fgets(tmp.bairro, sizeof(tmp.bairro), stdin);
+	if (tmp.bairro[strlen(tmp.bairro) - 1] == '\n'){
+    	tmp.bairro[strlen(tmp.bairro) - 1] = '\0';
+	}
+	TirarEspaco(tmp.bairro);
+    printf("Cidade: "); 
+    fgets(tmp.cidade, sizeof(tmp.cidade), stdin);
+    if (tmp.cidade[strlen(tmp.cidade) - 1] == '\n'){
+    	tmp.cidade[strlen(tmp.cidade) - 1] = '\0';
+	}
+	TirarEspaco(tmp.cidade);
     printf("Estado: ");
-    scanf("%s", tmp.estado);
-    getchar(); 
+    scanf("%s", tmp.estado); 
     do{    
-        printf("Informe o CEP com 8 digitos no seguinte formar 13214774 (sem o traco): ");
+        printf("Informe o CEP com 8 digitos no seguinte formarto 13214743 (sem o traco): ");
         scanf("%s", tmp.cep);
-        if(strlen(tmp.cep) != 8){
+        if(strlen(tmp.cep) > 10){
             printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
             i = 1;
-        }
-    }while(i>0);
+		}
 
+    }while(i>0);
 	getchar(); 
 	printf("Metragem do terreno total: ");
 	scanf("%i", &tmp.metragemtotal);    
@@ -145,25 +181,43 @@ void imovel_cadastro_criaInfos(char *arquivo){
 	scanf("%i", &tmp.numerodesalas); 
 	printf("Numeros de banheiros na casa: ");
 	scanf("%i", &tmp.numerodebanheiros); 
-	printf("Tem piscina na casa, informa S para SIM e N para NAO [S/N]: ");
-	scanf("%c", &tmp.tempiscina); 
-	printf("Tem churrasqueira na casa, informa S para SIM e N para NAO [S/N]: ");
-	scanf("%c", &tmp.temchurrasqueia); 
-	printf("Informe o valor do preco do imovel para venda, casas decimais devem ser informas com ponto da seguinte forma R$ 200300.33: ");
-	scanf("%f", &tmp.valor);
-	
-	while (!feof(arq)){
-	fprintf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, tmp.metragemtotal, tmp.metragemconstruido, tmp.numerodequartos, tmp.numerodesiutes, tmp.numerodesalas, tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, tmp.valor);
-	}
+	getchar(); 
 
-	printf("O cadastro do imovel foi feito com sucesso, a identificacao dele e '%i' em nosso sistema, guarde a informacao", tmp.nroimovel);
+	i = 0;
+	do{    
+        printf("Tem piscina na casa, informa S para SIM e N para NAO [S/N]: ");
+        scanf("%c", &tmp.tempiscina);
+        if(tmp.tempiscina != 'S' && tmp.tempiscina != 'N' && tmp.tempiscina != 's' && tmp.tempiscina != 'n'){
+            printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
+            i = 1;
+        }
+    }while(i>0);
+
+	i=0;
+	do{    
+        printf("Tem churrasqueira na casa, informa S para SIM e N para NAO [S/N]: ");
+		getchar();
+        scanf("%c", &tmp.temchurrasqueia);
+        if(tmp.tempiscina != 'S' && tmp.tempiscina != 'N' && tmp.tempiscina != 's' && tmp.tempiscina != 'n'){
+            printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
+            i = 1;
+        }
+    }while(i>0);
+	printf("Informe o valor do preco do imovel para venda, casas decimais devem ser informas com ponto da seguinte forma R$ 200300.33: ");
+	scanf("%f", &tmp.valor);	
+
+	if (arq != NULL){
+		fprintf(arq, "%i %s %s %s %s %s %i %i %i %i %i %i %c %c %.2f \n", tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, tmp.metragemtotal, tmp.metragemconstruido, tmp.numerodequartos, tmp.numerodesiutes, tmp.numerodesalas, tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, tmp.valor);
+	}
+	fclose(arq);
+	printf("\n\nO cadastro do imovel foi feito com sucesso! A identificacao dele e '%i' em nosso sistema, guarde a informacao\n\n", tmp.nroimovel);
 	
 }
 
 void consultaIMOVEL(char *arquivo){
     imovel consulta;
     int nroimovel;
-	char cep[8];
+	char cep[10];
     printf("Consulta de imoveis \n\n");
     printf("Informe o codigo de identificacao do imovel: ");
     scanf("%i", &nroimovel);
@@ -190,49 +244,30 @@ void menu_buscar_imoveis(){
 	imovel tmp, menu[9];
 	FILE *arq = fopen(fimoveis, "r");
 	
-	for(c=1;!feof(arq);c++){
+	for(c=0;!feof(arq);c++){
 		fscanf(arq, "%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
-		
-		menu[c] = 
+		menu[c] = tmp;
 	}
 
-	printf("Imovel [%s] [%s] [%i] \n[%s]", menu.estado, menu.cidade,menu.metragemtotal, menu.endereco);
+	fclose(arq);
 
-	
-
-}
-//Termina imoveis e começa funnções úteis
-void TirarEspaco(char *texto){ // usado para recolocar o espaço na hora de demonstrar o programa ao usuario 
-
-    int i;
-    for (i=0;i<strlen(texto);i++){
-		if (texto[i]==' '){
-			texto[i]='+';
-		}
-		
+	for (c=0;c<9; c++){
+		imprimir_dados_resumidos(menu[c]);
 	}
-}
 
-void ColocarEspaco(char *texto){ //função usada para adicionar um sinal do arquivo texto para não dar erros de leitura
-    int i;
-    for (i=0;i<strlen(texto);i++){
-		if (texto[i]=='+'){
-			texto[i]=' ';	
-		}
-	}
 }
-//termina funções úteis e começa o login
+//termina funções de imóvel
 void atualiza_dado(char *var, char *novoValor){ // atualiza o CPF para ser usado na MAIN
 	strcpy(var, novoValor);
 }
 
-user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario XXX
+user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario
 
 	FILE *arq = fopen(arquivo, "r");
 	user tmp;
 	
 	while(!feof(arq)){
-		fscanf(arq, "%s %i %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password);
+		fscanf(arq, "%s %i %s %s %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
 		if(strlen(cpf) == strlen(tmp.cpf) && strcmp(cpf, tmp.cpf) ==0){
 			break;
 		}
@@ -301,7 +336,7 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 	
 	printf("DIgite seu E-mail: ");
 	scanf("%s", tmp.email);
-	
+
 	printf("Digite seu CPF (apenas numeros): ");
 	scanf("%s", tmp.cpf);
 
@@ -329,7 +364,6 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 		} while (iguais == 0);
 		
 		FILE *arq = fopen(arquivo, "a+"); //abre o arquivo para escrita
-
 	
 		if(arq != NULL){
 			fprintf(arq, "%s %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
@@ -385,7 +419,7 @@ void login(){
 				if(strcmp(pesq.cpf, "-1") == 0){//retorna -1 casoo não seja encontrado
 					pesq = pesquisaUser(fcorretores, tempCPF);
 					if(strcmp(pesq.cpf, "-1") == 0){
-						printf("usuario não encontrado");
+						printf("usuario não encontrado\n\n");
 						break;
 					}
 				}
@@ -450,7 +484,7 @@ void remove_do_arquivo(char *arquivo, user usuario){ //tira o cpf do arquivo
 	rename("temp.txt", arquivo);
 }
 
-void ver_perfil(){ // módulo do perfilXXX
+void ver_perfil(){ // módulo do perfil 
 
 	int resp=0, resp2, resp3;
 	char *arquser;
@@ -461,9 +495,9 @@ void ver_perfil(){ // módulo do perfilXXX
 	ColocarEspaco(usuario.nome);
 	printf("Nome: %s \n", usuario.nome);
 	printf("Idade: %i \n", usuario.idade);
-	printf("CPF: %s \n \n", usuario.cpf);
-	printf("E-mail %s\n", usuario.email);
-	printf("Numero de Cel: %s\n", usuario.nrocllr);
+	printf("CPF: %s \n", usuario.cpf);
+	printf("E-mail: %s\n", usuario.email);
+	printf("Numero de Cel: %s\n\n", usuario.nrocllr);
 	
 	do{
 		printf("1 - excluir usuario\n2 - Editar perfil\n3 - sair\n\nEscolha: ");
@@ -615,7 +649,7 @@ int main(){
 			
 			switch(resp){
 				case 1:
-					printf("buscar imoveis");
+					consultaIMOVEL(fimoveis);
 					break;
 				case 2:
 					printf("Propostas e alugueis");
@@ -641,7 +675,7 @@ int main(){
 				
 				switch(resp){
 					case 1:
-						printf("buscar imoveis");
+						consultaIMOVEL(fimoveis);
 						break;
 					case 2:
 						imovel_cadastro_criaInfos(fimoveis);
