@@ -2,21 +2,25 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <math.h>
 
 #define fimoveis "imoveis.txt"
 #define fclientes "clientes.txt"
 #define fcorretores "corretores.txt"
+#define fpropostas "propostas.txt"
 
 typedef struct{
 	char nome[101];
 	int idade;
-	char cpf[12]; // CPF está sendo uma string pois a quantidade de digitos não consegue ser armazenada em uma única int
+	char cpf[12]; 
 	char password[11];
 	char nrocllr[15];
-	char email[101]; 
+	char email[101];
+	int rendaMensal;
 } user;
 
 typedef struct{
+	char cpfDono[12];
     int nroimovel;
 	char endereco[101];
     char bairro[101];
@@ -31,11 +35,17 @@ typedef struct{
     int numerodebanheiros;
     char tempiscina;
     char temchurrasqueia;
-    float valor; 
+    float valor; //valor venda
 } imovel;
 
-char cpf_user[12]; //cpf do usuario logado
+typedef struct{
+	char cpfSolicitante[12];
+	int type; // 1aluguel 2financiamento 3 compra
+	int numeroImovel;
+	int status; // 1 aguardando aprovação, 2 - Aprovado 3 - Rejeitado
+}proposta;
 
+char cpf_user[12]; //cpf do usuario logado
 
 void TirarEspaco(char *texto){ // usado para recolocar o espaço na hora de demonstrar o programa ao usuario 
 
@@ -55,6 +65,20 @@ void ColocarEspaco(char *texto){ //função usada para adicionar um sinal do arq
 			texto[i]=' ';	
 		}
 	}
+}
+
+void tabelaPrice(float principal, float taxa, int numParcelas) {
+    float taxaMensal = taxa / 100 / 12; // Converte a taxa de anual para mensal
+
+    printf("Parcela \t Juros \t Amortizacao \t Prestacao \n");
+
+    for (int i = 1; i <= numParcelas; i++) {
+        float juros = principal * taxaMensal;
+        float prestacao = principal * taxaMensal / (1 - pow(1 + taxaMensal, -numParcelas));
+
+        printf("%i \t %.2f \t %.2f \t %.2f \n", i, juros, prestacao - juros, prestacao);
+        principal -= prestacao - juros;
+    }
 }
 
 //começa funções de imoveis
@@ -77,11 +101,11 @@ void imprimir_dados(imovel a){
     printf("Quantidade de banheiros: %i\n", a.numerodebanheiros);
     printf("Possui piscina: %c\n", a.tempiscina);
     printf("Possui churrasqueira: %c\n", a.temchurrasqueia);
-    printf("Valor do imovel: %f\n", a.valor);
+    printf("Valor do imovel: %.2f\n", a.valor);
 }
 
 void imprimir_dados_resumidos(imovel a){
-	printf("Estado: [%s] Cidade: [%s] Tamanho: [%i]\n\nEndereco: [%s] Numero de quartos: [%i]", a.estado, a.cidade, a.metragemtotal, a.endereco, a.numerodequartos);
+	printf("Imovel numero: [%i] Estado: [%s] Cidade: [%s] Tamanho: [%i]M2\nEndereco: [%s] Quartos: [%i]\nValor: R$ [%.2f]\n\n\n",a.nroimovel, a.estado, a.cidade, a.metragemtotal, a.endereco, a.numerodequartos, a.valor);
 }
 
 void removerIMOVEL(char *arquivo, int numimovel, char *cep2){
@@ -89,9 +113,9 @@ void removerIMOVEL(char *arquivo, int numimovel, char *cep2){
     FILE* arq = fopen(arquivo,"r");
     FILE* arqNovo = fopen("novo.txt","w"); 
     while(!feof(arq)){
-	    fscanf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
+	    fscanf(arq,"%s %i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", tmp.cpfDono, &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
         if (tmp.nroimovel!=numimovel && strcmp(tmp.cep, cep2)!=0){
-            fprintf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, tmp.metragemtotal, tmp.metragemconstruido, tmp.numerodequartos, tmp.numerodesiutes, tmp.numerodesalas, tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, tmp.valor);
+            fprintf(arq, "%s %i %s %s %s %s %s %i %i %i %i %i %i %c %c %.2f \n",tmp.cpfDono, tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, tmp.metragemtotal, tmp.metragemconstruido, tmp.numerodequartos, tmp.numerodesiutes, tmp.numerodesalas, tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, tmp.valor);
         }
     }
     fclose(arq); 
@@ -100,14 +124,14 @@ void removerIMOVEL(char *arquivo, int numimovel, char *cep2){
     system("rename novoemp.txt imoveis.txt");
 }
 
-imovel pesquisaIMOVEL(char *arquivo, int numimovel, char *cep2){
+imovel pesquisaIMOVEL(char *arquivo, int numimovel){
 
 	FILE *arq = fopen(arquivo, "r");
 	imovel tmp;
 	
 	while(!feof(arq)){
-		fscanf(arq,"%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
-		if(strcmp(cep2, tmp.cep)==0 && numimovel == tmp.nroimovel){
+		fscanf(arq,"%s %i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n",tmp.cpfDono, &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
+		if(numimovel == tmp.nroimovel){
 			break;
 		}
 		else{
@@ -124,7 +148,7 @@ int qtd_imoveis(char *arquivo){
     imovel tmp;
     int c = 0;
     while (!feof(arq)){
-        fscanf(arq, "%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
+        fscanf(arq,"%s %i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n",tmp.cpfDono, &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
         c++; 
     }
     fclose(arq);
@@ -134,12 +158,13 @@ int qtd_imoveis(char *arquivo){
 void imovel_cadastro_criaInfos(char *arquivo){
     int i=0;
     imovel tmp;
-    FILE *arq = fopen(arquivo, "w");
-    tmp.nroimovel = qtd_imoveis(arquivo);
+    FILE *arq = fopen(arquivo, "a+");
+    tmp.nroimovel = qtd_imoveis(arquivo) + 1;
 
 
     printf("Vamos iniciar o cadastro de um novo imovel, coloque as inforacoes a seguir\n\n");
 	printf("Endereco: ");
+	getchar();
 	fgets(tmp.endereco, sizeof(tmp.endereco), stdin);
 	if (tmp.endereco[strlen(tmp.endereco) - 1] == '\n'){
     	tmp.endereco[strlen(tmp.endereco) - 1] = '\0';
@@ -204,27 +229,25 @@ void imovel_cadastro_criaInfos(char *arquivo){
         }
     }while(i>0);
 	printf("Informe o valor do preco do imovel para venda, casas decimais devem ser informas com ponto da seguinte forma R$ 200300.33: ");
-	scanf("%f", &tmp.valor);	
+	scanf("%f", &tmp.valor);
 
-	if (arq != NULL){
-		fprintf(arq, "%i %s %s %s %s %s %i %i %i %i %i %i %c %c %.2f \n", tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, tmp.metragemtotal, tmp.metragemconstruido, tmp.numerodequartos, tmp.numerodesiutes, tmp.numerodesalas, tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, tmp.valor);
+	strcpy(tmp.cpfDono, cpf_user);
+
+	if (arq!=NULL){
+		fprintf(arq, "%s %i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", tmp.cpfDono, tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, tmp.metragemtotal, tmp.metragemconstruido, tmp.numerodequartos, tmp.numerodesiutes, tmp.numerodesalas, tmp.numerodebanheiros, tmp.tempiscina, tmp.temchurrasqueia, tmp.valor);
 	}
 	fclose(arq);
 	printf("\n\nO cadastro do imovel foi feito com sucesso! A identificacao dele e '%i' em nosso sistema, guarde a informacao\n\n", tmp.nroimovel);
 	
 }
 
-void consultaIMOVEL(char *arquivo){
+int consulta_imovel(char *arquivo){
     imovel consulta;
     int nroimovel;
-	char cep[10];
     printf("Consulta de imoveis \n\n");
     printf("Informe o codigo de identificacao do imovel: ");
     scanf("%i", &nroimovel);
-    getchar();
-    printf("Informe o CEP do imovel: ");
-    scanf("%s", cep);
-    consulta = pesquisaIMOVEL(arquivo, nroimovel, cep);
+    consulta = pesquisaIMOVEL(arquivo, nroimovel);
     if(consulta.nroimovel!=-1)
     {
     printf("\n\n");
@@ -234,29 +257,10 @@ void consultaIMOVEL(char *arquivo){
     {
     printf("Imovel nao encontrado!\n\n");
     }
+	return consulta.nroimovel;
 }
 
-void menu_buscar_imoveis(){
-	system("cls");
-	printf("IMOVEIS");
-	
-	int c;
-	imovel tmp, menu[9];
-	FILE *arq = fopen(fimoveis, "r");
-	
-	for(c=0;!feof(arq);c++){
-		fscanf(arq, "%i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n", &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
-		menu[c] = tmp;
-	}
-
-	fclose(arq);
-
-	for (c=0;c<9; c++){
-		imprimir_dados_resumidos(menu[c]);
-	}
-
-}
-//termina funções de imóvel
+//termina funções de imóvel e começa funções de usuário
 void atualiza_dado(char *var, char *novoValor){ // atualiza o CPF para ser usado na MAIN
 	strcpy(var, novoValor);
 }
@@ -267,7 +271,7 @@ user pesquisaUser(char *arquivo, char *cpf){ // pesquisa os dados do usuario
 	user tmp;
 	
 	while(!feof(arq)){
-		fscanf(arq, "%s %i %s %s %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
+		fscanf(arq, "%s %i %i %s %s %s %s\n", tmp.nome, &tmp.idade, &tmp.rendaMensal, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
 		if(strlen(cpf) == strlen(tmp.cpf) && strcmp(cpf, tmp.cpf) ==0){
 			break;
 		}
@@ -337,6 +341,9 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 	printf("DIgite seu E-mail: ");
 	scanf("%s", tmp.email);
 
+	printf("Qual a sua renda mensal ?: ");
+	scanf("%i", &tmp.rendaMensal);
+
 	printf("Digite seu CPF (apenas numeros): ");
 	scanf("%s", tmp.cpf);
 
@@ -366,7 +373,7 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 		FILE *arq = fopen(arquivo, "a+"); //abre o arquivo para escrita
 	
 		if(arq != NULL){
-			fprintf(arq, "%s %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
+			fprintf(arq, "%s %i %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.rendaMensal, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
 		}
 		fclose(arq);
 		printf("Cadastro concluido com sucesso! \n \n");
@@ -449,19 +456,140 @@ void login(){
 		}
 	}
 }
-//termina login e começa os menus
+//termina login e começa proposta
+void nova_proposta(imovel imovelSelecionado){
+	//Tabela price
+	printf("NOVA PROPOSTA\n\n");
+	
+	int resp;
+    char resp2;
+    char *arquser; 
+	arquser = pesquisaArquivo(cpf_user);
+    FILE *arq = fopen(arquser, "r");
+    FILE *arqDono = fopen(fcorretores, "r");
+    FILE *arqProposta = fopen(fpropostas, "a+");
+    proposta p1;
+ 
+
+
+	printf("Dseja comprar ou alugar o imovel?\n1 - Alugar\n2 - Financiamento\n3 - Comprar\n\nEscolha: ");
+	scanf("%i", &resp);
+	
+	if(resp==1){ // aluguel
+		float aluguel = (imovelSelecionado.valor * 0.5)/100;
+		float calcao = aluguel*2;
+
+		ColocarEspaco(dono.nome);
+		printf("Aluguel do Imóvel de %s Sera de um calcao inicial de R$%.2f e o valor do aluguel de R$%f, Total inicial (primeiro mês) de: R$%.2f\n\n", dono.nome, calcao, aluguel, (aluguel + calcao));
+		printf("Confirma proposta de aluguel? S para SIM N para NAO [S/N]: \n\n");
+		scanf("%c", &resp2);
+		if(resp2=='S'||resp2=='s'){
+			strcpy(p1.cpfSolicitante, usuario.cpf);
+			p1.type = 1;
+			p1.numeroImovel = imovelSelecionado.nroimovel;
+			p1.status = 1;
+
+			fprintf(arqProposta, "%s %i %i %i\n", p1.cpfSolicitante, p1.type, p1.numeroImovel, p1.status);
+			printf("Proposta Enviada com sucesso! Aguarde a resposta do Corretor responsavel! Você pode verificar o status no menu 'Propostas e alugueis'");
+		}
+		else if(resp2=='N'||resp=='n'){}
+		else{
+			printf("Entrada invalida!");
+		}
+	}
+	else if(resp==2){ // compra
+		float principal, taxa;
+		int numParcelas;
+
+		// Solicita os dados ao usuário
+		printf("Informe o valor principal do empréstimo: ");
+		scanf("%f", &principal);
+
+		printf("Informe a taxa de juros anual (em porcentagem): ");
+		scanf("%f", &taxa);
+
+		printf("Informe o numero de parcelas: ");
+		scanf("%d", &numParcelas);
+
+		// Chama a função para calcular a Tabela Price
+		tabelaPrice(principal, taxa, numParcelas);
+	}
+	else if(resp==3){ //Compra
+		
+		
+		printf("teste");
+
+	}
+	else{
+		printf("Entrada invalida!");
+	}
+
+	fclose(arq);
+	fclose(arqDono);
+	fclose(arqProposta);
+}
+
+//termina propostas e começa menus
+
+void menu_buscar_imoveis(){
+	system("cls");
+	printf("IMOVEIS\n\n");
+	int resp;
+	char resp2;
+	imovel tmp, imovelSelecionado;
+	FILE *arq = fopen(fimoveis, "r");
+	do{
+		while(!feof(arq)){
+			fscanf(arq,"%s %i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n",tmp.cpfDono, &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
+			ColocarEspaco(tmp.endereco);
+			ColocarEspaco(tmp.bairro);
+			ColocarEspaco(tmp.cidade);
+			imprimir_dados_resumidos(tmp);
+		}
+		printf("O que deseja fazer?\n\n1 - Selecionar um imovel\n2 - Sair\n\nEscolha: ");
+		scanf("%i", &resp);
+
+		if(resp==1){
+			
+			int numeroDoImovel = consulta_imovel(fimoveis); //perga o numero do imovel
+			char cpfDonoImovel[12];
+			char *arqDono;
+
+			imovelSelecionado = pesquisaIMOVEL(fimoveis, numeroDoImovel);
+			arqDono = pesquisaArquivo(imovelSelecionado.cpfDono);
+			user dono = pesquisaUser(arqDono, cpfDonoImovel);
+			ColocarEspaco(dono.nome);
+			printf("Deseja fazer uma proposta para %s? S para SIM N para NAO [S/N]: ", dono.nome);
+			getchar();
+			scanf("%c", &resp2);
+			if (resp2=='s' || resp2=='S'){	
+				nova_proposta(imovelSelecionado.cpfDono, cpf_user);
+			}
+			else if(resp2=='n'|| resp2=='N'){ // Não faz nada
+			}
+			else{
+				printf("Entrada invalida!");
+			}
+		}
+		else if(resp==3){} //não faz nada
+		else{
+			printf("Entrada invalida\n");
+		}
+	}while(resp!=3);
+}
+
 void edita_arquivo(char *arquivo, user usuario){ //arquivo a ser editado e cpf a sofrer a alteração
 	user tmp; // usuario temporário
 	FILE *arq = fopen(arquivo, "r");
 	FILE *tmparq = fopen("temp.txt", "a+");
 
 	while(!feof(arq)){
-		fscanf(arq, "%s %i %s %s %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password, tmp.email, tmp.nrocllr);
+		fscanf(arq, "%s %i %i %s %s %s %s\n", tmp.nome, &tmp.idade, &tmp.rendaMensal, tmp.cpf, tmp.password, tmp.email, tmp.nrocllr);
 		if(strlen(usuario.cpf)!=strlen(tmp.cpf)&&strcmp(usuario.cpf, tmp.cpf)!=0){
-			fprintf(tmparq, "%s %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
+			fprintf(tmparq, "%s %i %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.rendaMensal, tmp.cpf, tmp.password, tmp.email, tmp.nrocllr);
 		}
 	}
-	fprintf(tmparq, "%s %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
+	fprintf(tmparq, "%s %i %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.rendaMensal, tmp.cpf, tmp.password, tmp.email, tmp.nrocllr);
 
 	fclose(arq);
 	fclose(tmparq);
@@ -474,9 +602,9 @@ void remove_do_arquivo(char *arquivo, user usuario){ //tira o cpf do arquivo
 	FILE *arq = fopen(arquivo, "r");
 	FILE *tmparq = fopen("temp.txt", "a+");
 	
-	fscanf(arq, "%s %i %s %s %s %s\n", tmp.nome, &tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
+	fscanf(arq, "%s %i %i %s %s %s %s\n", tmp.nome, &tmp.idade, &tmp.rendaMensal, tmp.cpf, tmp.password, tmp.email, tmp.nrocllr);
 	if(strlen(usuario.cpf)!=strlen(tmp.cpf)&&strcmp(usuario.cpf, tmp.cpf)!=0){
-		fprintf(tmparq, "%s %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.cpf, tmp.password, tmp.nrocllr, tmp.email);
+		fprintf(tmparq, "%s %i %i %s %s %s %s\n", tmp.nome, tmp.idade, tmp.rendaMensal, tmp.cpf, tmp.password, tmp.email, tmp.nrocllr);
 	} 
 	fclose(arq);
 	fclose(tmparq);
@@ -496,6 +624,7 @@ void ver_perfil(){ // módulo do perfil
 	printf("Nome: %s \n", usuario.nome);
 	printf("Idade: %i \n", usuario.idade);
 	printf("CPF: %s \n", usuario.cpf);
+	printf("Renda Mensal: %i\n", usuario.rendaMensal);
 	printf("E-mail: %s\n", usuario.email);
 	printf("Numero de Cel: %s\n\n", usuario.nrocllr);
 	
@@ -511,7 +640,7 @@ void ver_perfil(){ // módulo do perfil
 			}
 		}
 		else if(resp == 2){ // alteração do usuário
-			printf("EDIÇÃO DE USUARIO\n\n1 - Nome\n2 - Idade\n3 - CPF\n4 - Senha\n5 - E-mail\n6 - Celular\n\nEscolha: ");
+			printf("EDIÇÃO DE USUARIO\n\n1 - Nome\n2 - Idade\n3 - CPF\n4 - Senha\n5 - E-mail\n6 - Celular\n7 - Renda Mensal\n\nEscolha: ");
 			scanf("%i", &resp2);
 			
 			if(resp2==1){//nome
@@ -603,6 +732,17 @@ void ver_perfil(){ // módulo do perfil
 					edita_arquivo(arquser, usuario);
 				}
 			}
+			else if(resp2==7){
+				int tempRenda;
+				printf("Qual e a nova renda mensal?: ");
+				scanf("%i",&tempRenda);
+				printf("Confirma alteracao?\n1 - Sim\n2 - Nao\n\nEscolha: ");
+				scanf("%i",&resp3);
+				if(resp3==1){
+					usuario.rendaMensal = tempRenda;
+					edita_arquivo(arquser, usuario);
+				}
+			}
 			else{
 				printf("Entrada invalida!\n\n");
 			}
@@ -649,7 +789,7 @@ int main(){
 			
 			switch(resp){
 				case 1:
-					consultaIMOVEL(fimoveis);
+					menu_buscar_imoveis();
 					break;
 				case 2:
 					printf("Propostas e alugueis");
@@ -675,7 +815,7 @@ int main(){
 				
 				switch(resp){
 					case 1:
-						consultaIMOVEL(fimoveis);
+						menu_buscar_imoveis();
 						break;
 					case 2:
 						imovel_cadastro_criaInfos(fimoveis);
@@ -687,7 +827,7 @@ int main(){
 						ver_perfil();
 						break;
 					case 5:
-						printf("Até breve!");
+						printf("Ate breve!");
 						break;
 					default:
 						printf("entrada invalida");
@@ -701,3 +841,4 @@ int main(){
 	}
 	return 0;
 }
+
