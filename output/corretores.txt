@@ -1,8 +1,23 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 corretorjean 18 123123 321 
 =======
 jej 10 3213 jeej 10 
 robs 22 321 213 
 corretorteste 10 196653564 123 
+=======
+<<<<<<< HEAD
+
+corretorjean 18 123123 321 
+=======
+jej 10 3213 jeej 10 
+robs 22 321 213 
+corretorteste 10 196653564 123 
+>>>>>>> e6dd640995d74a9ed6bda274aff97a5381ec8e1c
+=======
+jej 10 3213 jeej 10 
+robs 22 321 213 
+corretorteste 10 196653564 123 
+>>>>>>> 54c69acd7dfa66066db6eeb5b65150a5b31e4620
 >>>>>>> e6dd640995d74a9ed6bda274aff97a5381ec8e1c
