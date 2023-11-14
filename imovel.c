@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <locale.h>
 #include <stdlib.h>
-#include <windows.h>
 #include <math.h>
+#include <string.h>
 
 #define fimoveis "imoveis.txt"
 #define fclientes "clientes.txt"
@@ -40,6 +40,7 @@ typedef struct{
 
 typedef struct{
 	char cpfsolicitante[12];
+	int nroproposta;
 	int type; // 1aluguel 2financiamento 3 compra
 	int numeroImovel;
 	int status; // 1 aguardando aprovação, 2 - Aprovado 3 - Rejeitado
@@ -72,6 +73,7 @@ void calculadora_price(char *arquivo,float principal, int numParcelas, int nroim
 	float taxamensal =  0.007974, pv, calculo1,calculo2,pmt,juros,totalfinancimanto,valorentrada2;
 	float valorentrada = principal * 0.2;
 	int i=1,resp5;
+	int nroproposta = (qtd_propostas(arquivo) + 1);
 	do{	float valorentrada = principal * 0.2;
 		printf("Valor minimo da entrada do imovel deve ser: R$%.2f\n", valorentrada);
 		printf("1 - Irei dar a entrada de R$%.2f\n2 - Outro Valor\n3 - Desejo Sair\n\nEscolha:", valorentrada);
@@ -85,7 +87,7 @@ void calculadora_price(char *arquivo,float principal, int numParcelas, int nroim
 			totalfinancimanto = pmt * numParcelas;
 			printf("Valor a pagar sera em %i parcelas de R$%.2f. Totalizando o valor de R$%.2f, com uma entrada de R$%.2f\n", numParcelas,pmt,totalfinancimanto,valorentrada);
 			i = 0;
-			fprintf(arquivo, "%s %i %i %i\n", cpf_user, financimento,nroimovel,status);
+			fprintf(arquivo, "%s %i %i %i\n", cpf_user,&nroproposta, financimento,nroimovel,status);
 		}
 		else if(resp5 == 2){
 			do{	printf("Informe o valor da entrada, lembrando que deve ser superior a R$%.2f\n\n Valor Entrada: ", valorentrada);
@@ -99,7 +101,7 @@ void calculadora_price(char *arquivo,float principal, int numParcelas, int nroim
 					totalfinancimanto = pmt * numParcelas;
 					printf("Valor a pagar sera em %i parcelas de R$%.2f. Totalizando o valor de R$%.2f, com uma entrada de R$%.2f\n", numParcelas,pmt,totalfinancimanto,valorentrada2);
 					i = 0;
-					fprintf(arquivo, "%s %i %i %i\n", cpf_user, financimento,nroimovel,status);
+					fprintf(arquivo, "%s %i %i %i\n", cpf_user,&nroproposta, financimento,nroimovel,status);
 				}
 				else{
 					printf("Insira um valor de entrada igual ou maior do que R$%.2f.\n",valorentrada);	
@@ -437,7 +439,7 @@ char *pesquisa_arquivo(char *cpf){ //vê qual é o arquivo que está o cpf
     return arqcorreto;
 }
 
-int verificaCPF(char *cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf não estiver cadastrado
+int verifica_cpf(char *cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf não estiver cadastrado
 	user tmp;
 	int pode;
 	tmp = pesquisa_user(fclientes, cpf);
@@ -453,7 +455,7 @@ int verificaCPF(char *cpf){ //retorna 1 se o cpf estiver cadastrado e 0 se o cpf
 	return pode;
 }
 
-void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadastro do usuário
+void login_cadastro_cria_infos(char *arquivo){ // cria as informações de cadastro do usuário
 	int iguais, podeusarcpf;
 	char tmppass[11];
 	user tmp;
@@ -483,7 +485,7 @@ void login_cadastro_criaInfos(char *arquivo){ // cria as informações de cadast
 	printf("Digite seu CPF (apenas numeros): ");
 	scanf("%s", tmp.cpf);
 
-	podeusarcpf = verificaCPF(tmp.cpf);
+	podeusarcpf = verifica_cpf(tmp.cpf);
 
 	if(podeusarcpf == 0){
 		do {
@@ -529,10 +531,10 @@ void login_cadastro(){ // função que direciona o arquivo de cadastro corretame
 	scanf("%i", &resp);
 	
 	if(resp == 1){
-		login_cadastro_criaInfos(fclientes);
+		login_cadastro_cria_infos(fclientes);
 	}
 	else if(resp == 2){
-		login_cadastro_criaInfos(fcorretores);
+		login_cadastro_cria_infos(fcorretores);
 	}
 	else{
 		printf("Entrada iválida!");
@@ -602,6 +604,7 @@ void aluguel(char *arquivo,float valorimovel,char cpf[12], int nroimovel){
 	char resp,resp2;
 	int  status = 1;
 	int i;
+	int nroproposta = (qtd_propostas(arquivo) + 1);
 
 
 	printf("Aluguel do Imovel tera de um calcao inicial de R$%.2f e o valor do aluguel de R$%.2f, Total inicial (primeiro mês) de: R$%.2f\n\n", calcao, aluguel, (aluguel + calcao));
@@ -611,7 +614,7 @@ void aluguel(char *arquivo,float valorimovel,char cpf[12], int nroimovel){
 		scanf("%c", &resp);
 		i = 1;
 		if(resp=='S'||resp=='s'){
-			fprintf(arquivo, "%s %i %i %i\n", cpf, 1,nroimovel,status);
+			fprintf(arquivo, "%s %i %i %i\n", cpf, &nroproposta,1,nroimovel,status);
 			printf("Proposta Enviada com sucesso! Iremos entrar em contato com voce para darmos continuidade no processo");
 			i = 0;
 		}
@@ -641,6 +644,8 @@ void aluguel(char *arquivo,float valorimovel,char cpf[12], int nroimovel){
 void compra(char *arquivo,float valorimovel,char *cpf, int nroimovel){
 	int resp3, i=1,compra = 3, status = 1, financimento = 2,nroparcelas;
 	char resp4;
+	int nroproposta = (qtd_propostas(arquivo) + 1);
+
 
 	do{	printf("1 - Pagamento à vista\n2 - Financiamento\n\nEscolha:");
 		getchar();
@@ -652,7 +657,7 @@ void compra(char *arquivo,float valorimovel,char *cpf, int nroimovel){
 				getchar();
 				scanf("%c", &resp4);
 				if(resp4=='S'||resp4=='s'){
-					fprintf(arquivo, "%s %i %i %i\n", cpf, compra,nroimovel,status);
+					fprintf(arquivo, "%s %i %i %i\n", cpf, &nroproposta,compra,nroimovel,status);
 					printf("Proposta Enviada com sucesso! Iremos entrar em contato com voce para darmos continuidade no processo");
 					i = 0;
 				}
@@ -748,7 +753,7 @@ void proposta_imprimir_dados_cliente(proposta a){
 	imovel imv = pesquisa_imovel(fimoveis, a.numeroImovel);	
 	user corretorimovel = pesquisa_user(fcorretores, imv.cpfcorretor);
 	colocar_espaco(corretorimovel.nome);
-	printf("Imovel: [%i] DE: [%s]\nStatus[%s]", imv.nroimovel, corretorimovel.nome, status);
+	printf("Proposta Numero: [%i] Imovel: [%i] DE: [%s]\nStatus[%s]",a.nroproposta, imv.nroimovel, corretorimovel.nome, status);
 }
 
 //termina propostas e começa menus
@@ -810,12 +815,28 @@ void menu_propostas_e_alugueis(){
 			printf("Status das minhas propostas\n\n");
 
 			while (!feof(arqProposta)){
-				fscanf(arqProposta, "%s %i %i %i", a.cpfsolicitante, &a.type, &a.numeroImovel, &a.status);
+				fscanf(arqProposta, "%s %i %i %i %i", a.cpfsolicitante,&a.nroproposta, &a.type, &a.numeroImovel, &a.status);
 				if(strcmp(cpf_user, a.cpfsolicitante)==0){
 					proposta_imprimir_dados_cliente(a);
 				}
 			}
 		}
+
+}
+
+int qtd_propostas(char *arquivo){
+
+    FILE *arq = fopen(arquivo, "r");
+    proposta tmp;
+    int c = 0;
+    while (!feof(arq)){
+        fscanf(arq,"%s %i %i %i %i\n",tmp.cpfsolicitante, &tmp.nroproposta, &tmp.type, &tmp.numeroImovel, &tmp.status);
+        c++; 
+    }
+    fclose(arq);
+    return c;
+}
+void altera_proposta_e_alugueis(){
 
 }
 
