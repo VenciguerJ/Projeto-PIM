@@ -412,6 +412,7 @@ int consulta_imovel(char *arquivo){
 }
 
 //termina funções de imóvel e começa funções de usuário
+
 void atualiza_dado(char *var, char *novoValor){ // atualiza o CPF para ser usado na MAIN
 	strcpy(var, novoValor);
 }
@@ -607,12 +608,11 @@ void login(){
 		}
 	}
 }
-
 //termina login e começa proposta
 void aluguel(float valorimovel,char *cpf, int nroimovel){//Mostra os valores de aluguel
 	float aluguel = (valorimovel * 0.5)/100;
 	float calcao = aluguel*2;
-	char resp,resp2;
+	char resp;
 	int  status = 1;
 	int valuguel=1;
 	int i;
@@ -657,7 +657,7 @@ void compra(float valorimovel,char *cpf, int nroimovel){
 				scanf("%c", &resp4);
 				if(resp4=='S'||resp4=='s'){
 					fprintf(arq, "%s %i %i %i %i\n", cpf, nroproposta, compra,nroimovel,status);
-					printf("Proposta Enviada com sucesso! Iremos entrar em contato com voce para darmos continuidade no processo");
+					printf("Proposta Enviada com sucesso! Iremos entrar em contato com voce para darmos continuidade no processo\n\n");
 					i = 0;
 				}
 				else if(resp4=='N'||resp4=='n'){
@@ -730,12 +730,32 @@ void nova_proposta(float valorimovel,int nroimovel){
 	fclose(arq);
 }
 
+proposta pesquisa_proposta(){
+	int numeroproposta;
+	FILE *arq = fopen(fpropostas, "a+");
+	proposta tmp;
+	printf("Digite o numero da proposta: ");
+	scanf("%i", &numeroproposta);
+
+	while(!feof(arq)){
+		fscanf(arq, "%s %i %i %i %i\n", tmp.cpfsolicitante, &tmp.nroproposta, &tmp.type, &tmp.numeroImovel, &tmp.status);
+		if(numeroproposta == tmp.nroproposta){
+			break;
+		}
+		else{
+			tmp.nroproposta = -1;
+		}
+	}
+	fclose(arq);
+	return tmp;
+}
+
 void proposta_imprimir_dados_cliente(proposta a){
 	
 	char status[50];
 	switch (a.status){
 	case 1: // Aguardando aprovação
-		strcpy(status, "Aguardando aprovação");
+		strcpy(status, "Aguardando aprovacao");
 		break;
 	case 2: // Aprovado
 		strcpy(status, "Aprovado!");
@@ -749,7 +769,29 @@ void proposta_imprimir_dados_cliente(proposta a){
 	imovel imv = pesquisa_imovel(fimoveis, a.numeroImovel);	
 	user corretorimovel = pesquisa_user(fcorretores, imv.cpfcorretor);
 	colocar_espaco(corretorimovel.nome);
-	printf("Proposta Numero: [%i] Imovel: [%i] DE: [%s]\nStatus[%s]",a.nroproposta, imv.nroimovel, corretorimovel.nome, status);
+	printf("Proposta N: [%i] Imovel: [%i] DE: [%s]\nStatus[%s]\n\n",a.nroproposta, imv.nroimovel, corretorimovel.nome, status);
+}
+
+void proposta_imprimir_dados_corretor(proposta a){
+	char status[50];
+	switch (a.status){
+	case 1: // Aguardando aprovação
+		strcpy(status, "Aguardando aprovacao");
+		break;
+	case 2: // Aprovado
+		strcpy(status, "Aprovado!");
+		break;
+	case 3: // Recusado
+		strcpy(status, "Recusado :/");
+		break;
+	default:
+		break;
+	}
+	user solicitante = pesquisa_user(fclientes, a.cpfsolicitante);
+	imovel imv = pesquisa_imovel(fimoveis, a.numeroImovel);
+	printf("PROPOSTAS PARA MEU IMOVEL\n\n");
+
+	printf("Proposta para o imovel: [%i] Bairro: [%s] Status: [%s]\nProposta de: [%s]\n\n", imv.nroimovel, imv.bairro,status, solicitante.nome);
 }
 
 //termina propostas e começa menus
@@ -761,6 +803,7 @@ void menu_buscar_imoveis(){
 	char resp2;
 	imovel tmp, imovelSelecionado;
 	FILE *arq = fopen(fimoveis, "r");
+	user usu;
 	do{
 		while(!feof(arq)){
 			fscanf(arq,"%s %i %s %s %s %s %s %i %i %i %i %i %i %c %c %f \n",tmp.cpfcorretor, &tmp.nroimovel, tmp.endereco, tmp.bairro, tmp.cidade, tmp.estado, tmp.cep, &tmp.metragemtotal, &tmp.metragemconstruido, &tmp.numerodequartos, &tmp.numerodesiutes, &tmp.numerodesalas, &tmp.numerodebanheiros, &tmp.tempiscina, &tmp.temchurrasqueia, &tmp.valor);
@@ -781,7 +824,14 @@ void menu_buscar_imoveis(){
 			getchar();
 			scanf("%c", &resp2);
 			if (resp2=='s'||resp2=='S'){	
-				nova_proposta(imovelSelecionado.valor,imovelSelecionado.nroimovel);
+				usu = pesquisa_user(fclientes, cpf_user);
+				if(strcmp (usu.cpf, "-1")==0){
+					printf("Voce esta com um perfil de corretor, portanto somente clientes podem fazer propostas\n");
+				}
+				else{
+					nova_proposta(imovelSelecionado.valor,imovelSelecionado.nroimovel);
+				}	
+				
 			}
 			else if(resp2=='n'|| resp2=='N'){ // Não faz nada
 			}
@@ -797,26 +847,79 @@ void menu_buscar_imoveis(){
 }
 
 void menu_propostas_e_alugueis(){
-		printf("MINHAS PROPOSTAS\n\n");
-		FILE *arqProposta = fopen(fpropostas, "a+");
-		proposta a;
-		imovel tmp;
-		tmp = pesquisa_imovel(fclientes, a.numeroImovel);
+	printf("MINHAS PROPOSTAS\n\n");
+	FILE *arq = fopen(fpropostas, "a+");
+	FILE *tmparq = fopen("temp.txt", "a+");
+	proposta a, menu;
+	imovel tmp;
+	user logado, solicitante;
+	int resp; 
+	char resp2;
 
-		char *arqUserLogado = pesquisa_arquivo(cpf_user);
+	pesquisa_user(fclientes, cpf_user);
+	if(strcmp(logado.cpf, "-1")){ 
+		logado = pesquisa_user(fcorretores, cpf_user); // ve o menu de corretores
 
-		if(strcmp(arqUserLogado, fclientes)==0){
+		while (!feof(arq)){
+			fscanf(arq, "%s %i %i %i %i\n", a.cpfsolicitante,&a.nroproposta, &a.type, &a.numeroImovel, &a.status);
+			tmp = pesquisa_imovel(fimoveis, a.numeroImovel);
+			if(strcmp(tmp.cpfcorretor, cpf_user)==0){
+				proposta_imprimir_dados_corretor(a);
+			}
+		}	
+		
+		printf("O que deseja fazer?\n\n1 - Selecionar proposta\n2 - sair\n\nEscolha: ");
+		scanf("%i", &resp);
+		if(resp==1){
+			menu = pesquisa_proposta(); // ver se abre o menu
+			solicitante = pesquisa_user(fclientes, a.cpfsolicitante);
 
-			printf("Status das minhas propostas\n\n");
+			printf("DADOS DA PROPOSTA\n\n");
+			imprimir_dados_resumidos(tmp);
+			printf("Solicitante [%s] Idade[%i]\n", solicitante.nome, solicitante.idade);
+			printf("Renda mensal [%i]\n\n", solicitante.rendaMensal);
+			
+			printf("Aprova proposta? S para SIM N para NAO [S/N]: \n");
+			scanf("%c", &resp2);
 
-			while (!feof(arqProposta)){
-				fscanf(arqProposta, "%s %i %i %i %i", a.cpfsolicitante,&a.nroproposta, &a.type, &a.numeroImovel, &a.status);
-				if(strcmp(cpf_user, a.cpfsolicitante)==0){
-					proposta_imprimir_dados_cliente(a);
+			if(resp2 == 's'||resp2=='S'){
+				while(!feof(arq)){
+					fscanf(arq, "%s %i %i %i %i\n", a.cpfsolicitante, &a.nroproposta, &a.type, &a.numeroImovel, &a.status);
+					if(strcmp(menu.cpfsolicitante, a.cpfsolicitante)!=0){
+						fprintf(tmparq, "%s %i %i %i %i\n", a.cpfsolicitante, a.nroproposta, a.type, a.numeroImovel, a.status);
+					}
 				}
+				fprintf(tmparq, "%s %i %i %i %i\n", a.cpfsolicitante, a.nroproposta, a.type, a.numeroImovel, 2);
+				fclose(arq);
+				fclose(tmparq);
+				remove(fpropostas);
+				rename("temp.txt", fpropostas);
+			}
+			else if(resp2=='n'||resp2=='N'){
+				while(!feof(arq)){
+					fscanf(arq, "%s %i %i %i %i\n", a.cpfsolicitante, &a.nroproposta, &a.type, &a.numeroImovel, &a.status);
+					if(strcmp(menu.cpfsolicitante, a.cpfsolicitante)!=0){
+						fprintf(tmparq, "%s %i %i %i %i\n", a.cpfsolicitante, a.nroproposta, a.type, a.numeroImovel, a.status);
+					}
+				}
+				fprintf(tmparq, "%s %i %i %i %i\n", a.cpfsolicitante, a.nroproposta, a.type, a.numeroImovel, 3);
+				fclose(arq);
+				fclose(tmparq);
+				remove(fpropostas);
+				rename("temp.txt", fpropostas);
+			}
+
+		}
+		
+	}
+	else{
+		while (!feof(arq)){// menu de clientes
+			fscanf(arq, "%s %i %i %i %i\n", a.cpfsolicitante,&a.nroproposta, &a.type, &a.numeroImovel, &a.status);
+			if(strcmp(cpf_user, a.cpfsolicitante)==0){
+				proposta_imprimir_dados_cliente(a);
 			}
 		}
-
+	}
 }
 
 void edita_arquivo(char *arquivo, user usuario){ //arquivo a ser editado e cpf a sofrer a alteração
@@ -1021,11 +1124,12 @@ int main(){
 	login();
 
 	usuario = pesquisa_user(fclientes, cpf_user);
-
+	system("cls");
 	int resp;
 	
 	if (strcmp(usuario.cpf,"-1")!=0){//identifica se o cpf está na database de clientes
 		while(resp !=4){
+			system("cls");
 			resp = menu_cliente();
 			
 			switch(resp){
@@ -1052,6 +1156,7 @@ int main(){
 		if(strcmp(usuario.cpf,"-1")!=0){ //identifica se o cpf está na database de corretores
 			
 			while(resp !=5){
+				system("cls");
 				resp = menu_corretor();
 				
 				switch(resp){
