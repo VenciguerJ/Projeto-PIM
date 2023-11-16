@@ -91,6 +91,7 @@ int qtd_propostas(char *arquivo){ // retorna quantas propostas existem
 
 void calculadora_price(char *arquivo, float principal, int numParcelas, int nroimovel) { // faz o calculo de orçamaento pela tabela price
 	int status = 1, financimento = 2;
+	char resp;
 	float taxamensal =  0.007974, pv, calculo1,calculo2,pmt,juros,totalfinancimanto,valorentrada2;
 	int i=1,resp5;
 	int nroproposta = qtd_propostas(fpropostas);
@@ -111,7 +112,24 @@ void calculadora_price(char *arquivo, float principal, int numParcelas, int nroi
 			totalfinancimanto = pmt * numParcelas;
 			printf("Valor a pagar sera em %i parcelas de R$%.2f. Totalizando o valor de R$%.2f, com uma entrada de R$%.2f\n", numParcelas,pmt,totalfinancimanto,valorentrada);
 			i = 0;
-			fprintf(arq, "%s %i %i %i %i\n", cpf_user, nroproposta, financimento,nroimovel,status);
+			do{
+				printf("Confirma proposta de financiamento? S para SIM N para NAO [S/N]: ");
+				getchar();
+				scanf("%c", &resp);
+				i = 1;
+				if(resp=='S'|| resp=='s'){
+					fprintf(arq, "%s %i %i %i %i\n", cpf_user, nroproposta, financimento,nroimovel,status);
+					printf("Proposta Enviada com sucesso! Iremos entrar em contato com voce para darmos continuidade no processo");
+					i = 0;
+				}
+				else if(resp=='N'|| resp=='n'){}
+				else{
+					i = 1;
+					printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
+				}
+			}while(i>0);
+			fclose(arq);
+
 		}
 		else if(resp5 == 2){
 			do{	
@@ -126,8 +144,24 @@ void calculadora_price(char *arquivo, float principal, int numParcelas, int nroi
 					totalfinancimanto = pmt * numParcelas;
 					printf("Valor a pagar sera em %i parcelas de R$%.2f. Totalizando o valor de R$%.2f, com uma entrada de R$%.2f\n", numParcelas,pmt,totalfinancimanto,valorentrada2);
 					i = 0;
-					fprintf(arq, "%s %i %i %i %i\n", cpf_user, nroproposta, financimento,nroimovel,status);
-				}
+					do{
+						printf("Confirma proposta de financiamento? S para SIM N para NAO [S/N]: ");
+						getchar();
+						scanf("%c", &resp);
+						i = 1;
+						if(resp=='S'|| resp=='s'){
+							fprintf(arq, "%s %i %i %i %i\n", cpf_user, nroproposta, financimento,nroimovel,status);
+							printf("Proposta Enviada com sucesso! Iremos entrar em contato com voce para darmos continuidade no processo");
+							i = 0;
+						}
+						else if(resp=='N'|| resp=='n'){}
+						else{
+							i = 1;
+							printf("Ops... acho que deu algo errado, vamos tentar novamente.\n\n");
+						}
+					}while(i>0);
+					fclose(arq);
+					}
 				else{
 					printf("Insira um valor de entrada igual ou maior do que R$%.2f.\n",valorentrada);	
 					i = 1;				
@@ -528,7 +562,7 @@ void login_cadastro_cria_infos(char *arquivo){ // cria as informações de cadas
 			do{
 				printf("Crie uma senha (ela deve ter no maximo 10 caracteres): ");
 				getSenha(tmp.password);
-				getchar();
+				printf("\n");
 				if(strlen(tmp.password)>10){
 					printf("senha muito longa\n");
 				} 
@@ -539,7 +573,7 @@ void login_cadastro_cria_infos(char *arquivo){ // cria as informações de cadas
 			// Verifica se as senhas têm o mesmo comprimento e se são iguais
 			if (strlen(tmp.password) != strlen(tmppass) || strcmp(tmp.password, tmppass) != 0) {
 				iguais = 0;
-				printf("\nAs senhas não conferem! Tente novamente.\n\n");
+				printf("\nAs senhas nao conferem! Tente novamente.\n\n");
 			}
 		} while (iguais == 0);
 		
@@ -572,7 +606,7 @@ void login_cadastro(){ // função que direciona o arquivo de cadastro corretame
 		login_cadastro_cria_infos(fcorretores);
 	}
 	else{
-		printf("Entrada iválida!");
+		printf("Entrada ivalida!");
 	}
 }
 
@@ -667,7 +701,7 @@ void compra(float valorimovel,char *cpf, int nroimovel){
 	int nroproposta = qtd_propostas(fpropostas) + 1;
 	FILE *arq = fopen(fpropostas, "a+");
 
-	do{	printf("1 - Pagamento à vista\n2 - Financiamento\n\nEscolha:");
+	do{	printf("1 - Pagamento a vista\n2 - Financiamento\n\nEscolha:");
 		getchar();
 		scanf("%i", &resp3);
 		if(resp3==1){ // pagamento à vista
@@ -1010,7 +1044,7 @@ void ver_perfil(){ // módulo do perfil
 			}
 		}
 		else if(resp == 2){ // alteração do usuário
-			printf("EDIÇÃO DE USUARIO\n\n1 - Nome\n2 - Idade\n3 - CPF\n4 - Senha\n5 - E-mail\n6 - Celular\n7 - Renda Mensal\n\nEscolha: ");
+			printf("EDICAO DE USUARIO\n\n1 - Nome\n2 - Idade\n3 - CPF\n4 - Senha\n5 - E-mail\n6 - Celular\n7 - Renda Mensal\n\nEscolha: ");
 			scanf("%i", &resp2);
 			
 			if(resp2==1){//nome
@@ -1028,7 +1062,7 @@ void ver_perfil(){ // módulo do perfil
 				}
 				else{
 					// termina de perguntar dados e começa a tratar os dados
-					printf("Confirma alteração?\n1 - Sim\n2 - Nao\n\nEscolha: ");
+					printf("Confirma alteracao?\n1 - Sim\n2 - Nao\n\nEscolha: ");
 					scanf("%i",&resp3);
 					if(resp3==1){
 						strcpy(usuario.nome,tempname);
@@ -1052,7 +1086,7 @@ void ver_perfil(){ // módulo do perfil
 				char tempcpf[12];
 				printf("Qual e o novo CPF?: ");
 				scanf("%s",tempcpf);
-				printf("Confirma alteração?\n1 - Sim\n2 - Nao\n\nEscolha: ");
+				printf("Confirma alteracao?\n1 - Sim\n2 - Nao\n\nEscolha: ");
 				scanf("%i",&resp3);
 				if(resp3==1){
 					strcpy(usuario.cpf,tempcpf);
@@ -1095,7 +1129,7 @@ void ver_perfil(){ // módulo do perfil
 				char tempcell[15];
 				printf("Qual e o novo numero?: ");
 				scanf("%s",tempcell);
-				printf("Confirma alteração?\n1 - Sim\n2 - Nao\n\nEscolha: ");
+				printf("Confirma alterao?\n1 - Sim\n2 - Nao\n\nEscolha: ");
 				scanf("%i",&resp3);
 				if(resp3==1){
 					strcpy(usuario.nrocllr,tempcell);
@@ -1187,7 +1221,7 @@ int main(){
 						menu_buscar_imoveis();
 						break;
 					case 2:
-						imovel_cadastro_cria_infos(fimoveis);
+						imovel_cadastro_cria _infos(fimoveis);
 						break;
 					case 3:
 						altera_imovel();
